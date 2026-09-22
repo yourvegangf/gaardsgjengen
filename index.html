@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gårdsgjengen</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #fdf4e3;
+    --bg-2: #f7e9cf;
+    --surface: #fffdf8;
+    --surface-2: #fff7e9;
+    --ink: #3c3026;
+    --muted: #8d7c68;
+    --line: #ecdfc9;
+    --accent: #e8992b;
+    --accent-ink: #ffffff;
+    --accent-soft: #ffeac2;
+    --green: #6fa85c;
+    --green-soft: #e2f0d9;
+    --pink: #e79a9a;
+    --grass: #d9ecc9;
+    --shadow: 0 2px 0 rgba(60,48,38,.06), 0 10px 24px -14px rgba(60,48,38,.35);
+    --r: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #241e19; --bg-2: #2b241e; --surface: #2f2721; --surface-2: #372e26;
+      --ink: #f6ece0; --muted: #b5a491; --line: #463b31;
+      --accent: #f2b45d; --accent-ink: #2a2118; --accent-soft: #4a3a22;
+      --green: #8cc275; --green-soft: #33402c; --pink: #d98f8f; --grass: #36452e;
+      --shadow: 0 2px 0 rgba(0,0,0,.2), 0 10px 24px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #241e19; --bg-2: #2b241e; --surface: #2f2721; --surface-2: #372e26;
+    --ink: #f6ece0; --muted: #b5a491; --line: #463b31;
+    --accent: #f2b45d; --accent-ink: #2a2118; --accent-soft: #4a3a22;
+    --green: #8cc275; --green-soft: #33402c; --pink: #d98f8f; --grass: #36452e;
+    --shadow: 0 2px 0 rgba(0,0,0,.2), 0 10px 24px -14px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 6%, var(--bg-2) 0 20%, transparent 20.5%),
+      radial-gradient(circle at 90% 3%, var(--bg-2) 0 16%, transparent 16.5%);
+    background-repeat: no-repeat;
+    color: var(--ink);
+    font-family: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+    font-size: 16px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 22px 16px 72px; }
+
+  /* ---------- Banner ---------- */
+  .banner {
+    display: none; background: var(--accent-soft); border: 1px solid var(--accent);
+    border-radius: 12px; padding: 11px 14px; margin-bottom: 16px; font-size: .88rem;
+  }
+  .banner.show { display: block; }
+  .banner b { display: block; }
+
+  /* ---------- Header ---------- */
+  header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+  .mascot { width: 58px; height: 58px; flex: none; }
+  .mascot .bob { animation: bob 2.8s ease-in-out infinite; transform-origin: 32px 56px; }
+  @keyframes bob { 0%,100% { transform: translateY(0) rotate(0deg);} 50% { transform: translateY(-3px) rotate(-4deg);} }
+  h1 { font-size: 1.55rem; margin: 0; letter-spacing: -.02em; }
+  .tagline { margin: 2px 0 0; color: var(--muted); font-size: .92rem; }
+  .head-text { flex: 1 1 220px; min-width: 0; }
+  .head-btns { display: flex; gap: 8px; flex: none; }
+
+  .btn {
+    background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 999px; padding: 7px 14px; font: inherit; font-size: .85rem; cursor: pointer;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .btn.ghost { background: transparent; color: var(--muted); }
+  .btn.ghost:hover { color: var(--ink); }
+  .btn.danger:hover { border-color: var(--pink); color: var(--pink); }
+
+  /* ---------- Cards ---------- */
+  .card { background: var(--surface); border: 1px solid var(--line);
+          border-radius: var(--r); box-shadow: var(--shadow); padding: 20px; }
+  .card + .card { margin-top: 16px; }
+  h2 { font-size: 1.02rem; margin: 0 0 14px; letter-spacing: -.01em; }
+  h2 .sub { font-weight: 400; color: var(--muted); font-size: .85rem; margin-left: 6px; }
+
+  /* ---------- Progress ---------- */
+  .progress-row { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+  .ring { position: relative; flex: none; width: 132px; height: 132px; }
+  .ring svg { transform: rotate(-90deg); display: block; }
+  .ring .track { stroke: var(--accent-soft); }
+  .ring .fill { stroke: var(--accent); stroke-linecap: round;
+                transition: stroke-dasharray .6s cubic-bezier(.34,1.3,.64,1); }
+  .ring .pct { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .ring .pct b { font-size: 1.7rem; line-height: 1; display: block; letter-spacing: -.03em; }
+  .ring .pct span { font-size: .72rem; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)); gap: 10px; flex: 1 1 320px; }
+  .stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px; }
+  .stat b { display: block; font-size: 1.26rem; letter-spacing: -.02em; }
+  .stat span { font-size: .77rem; color: var(--muted); }
+
+  .bar { height: 14px; border-radius: 999px; background: var(--accent-soft); overflow: hidden; margin-top: 16px; }
+  .bar i { display: block; height: 100%; width: 0; border-radius: 999px;
+           background: linear-gradient(90deg, var(--accent), var(--green));
+           transition: width .6s cubic-bezier(.34,1.3,.64,1); }
+  .lines { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+  .cheer { margin: 0; font-size: .95rem; color: var(--green); font-weight: 600; flex: 1 1 240px; min-height: 1.5em; }
+  .pace { margin: 0; font-size: .88rem; color: var(--muted); }
+  .pace.behind { color: var(--pink); font-weight: 600; }
+  .pace.ahead { color: var(--green); font-weight: 600; }
+
+  /* ---------- Flokken ---------- */
+  .yard {
+    background: var(--grass); border-radius: 14px; padding: 14px 12px 10px;
+    min-height: 62px; display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-end;
+    margin-bottom: 14px;
+  }
+  .yard .empty { color: var(--muted); font-size: .85rem; padding: 4px 4px 8px; }
+  .yard .hen { font-size: 1.9rem; line-height: 1; animation: peck 2.4s ease-in-out infinite; }
+  @keyframes peck { 0%,100% { transform: translateY(0) rotate(0); } 45% { transform: translateY(-4px) rotate(-6deg); } }
+
+  .coop { display: grid; grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); gap: 9px; }
+  .pen { background: var(--surface-2); border: 1px dashed var(--line); border-radius: 13px;
+         padding: 10px 4px 8px; text-align: center; transition: .25s; }
+  .pen .emo { font-size: 1.7rem; line-height: 1.2; filter: grayscale(1); opacity: .26; transition: .3s; display: block; }
+  .pen .nm { font-size: .72rem; color: var(--muted); display: block; margin-top: 2px; }
+  .pen .at { font-size: .66rem; color: var(--muted); opacity: .75; display: block; }
+  .pen.on { background: var(--green-soft); border-style: solid; border-color: var(--green); }
+  .pen.on .emo { filter: none; opacity: 1; animation: pop .5s cubic-bezier(.34,1.6,.64,1); }
+  .pen.on .nm { color: var(--ink); font-weight: 600; }
+  @keyframes pop { 0% { transform: scale(.3) rotate(-18deg); } 70% { transform: scale(1.18) rotate(6deg); } 100% { transform: scale(1); } }
+
+  /* ---------- Belønning ---------- */
+  .reward { display: flex; gap: 14px; align-items: center; }
+  .reward .gift { font-size: 2.2rem; flex: none; }
+  .reward p { margin: 0; font-size: .95rem; }
+  .reward p small { display: block; color: var(--muted); font-size: .84rem; margin-top: 2px; }
+
+  /* ---------- Tasks ---------- */
+  .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .spacer { flex: 1; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 10px; }
+  .task { position: relative; background: var(--surface-2); border: 1px solid var(--line);
+          border-radius: 13px; padding: 10px 11px 9px; cursor: pointer; transition: .18s;
+          display: flex; flex-direction: column; gap: 6px; min-height: 90px; }
+  .task:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .task.busy { opacity: .5; pointer-events: none; }
+  .task .top { display: flex; align-items: center; gap: 8px; }
+  .task .num { font-size: .72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .task .box { margin-left: auto; width: 22px; height: 22px; flex: none; border-radius: 7px;
+               border: 2px solid var(--line); background: var(--surface); display: grid;
+               place-content: center; transition: .18s; }
+  .task .box svg { width: 13px; height: 13px; opacity: 0; transform: scale(.4); transition: .2s; }
+  .task .label { font-size: .9rem; line-height: 1.35; outline: none; border-radius: 6px;
+                 padding: 1px 3px; margin: -1px -3px; word-break: break-word; }
+  .task .label:focus { background: var(--accent-soft); }
+  .task .hrs { font-size: .72rem; color: var(--muted); margin-top: auto; }
+  .task.done { background: var(--green-soft); border-color: var(--green); }
+  .task.done .box { background: var(--green); border-color: var(--green); }
+  .task.done .box svg { opacity: 1; transform: scale(1); }
+  .task.done .label { text-decoration: line-through; text-decoration-thickness: 1.5px; opacity: .72; }
+  .task.done .hrs { color: var(--green); font-weight: 600; }
+
+  /* ---------- Celebration ---------- */
+  .veil { position: fixed; inset: 0; background: rgba(40,32,24,.55); backdrop-filter: blur(3px);
+          display: none; place-content: center; z-index: 60; padding: 16px; }
+  .veil.show { display: grid; }
+  .modal { background: var(--surface); border: 1px solid var(--line); border-radius: 22px;
+           padding: 30px 28px; max-width: 390px; text-align: center; box-shadow: var(--shadow);
+           animation: pop .45s cubic-bezier(.34,1.5,.64,1); }
+  .modal .big { font-size: 4rem; line-height: 1; display: block; }
+  .modal h3 { margin: 12px 0 6px; font-size: 1.25rem; }
+  .modal p { margin: 0 0 20px; color: var(--muted); font-size: .95rem; }
+
+  .fx { position: fixed; pointer-events: none; z-index: 90; font-size: 1.3rem; will-change: transform, opacity; }
+
+  /* ---------- Skjermvisning ---------- */
+  .tv { position: fixed; inset: 0; background: var(--bg); z-index: 70; display: none;
+        flex-direction: column; justify-content: center; align-items: center; gap: 2vh; padding: 3vh 3vw; text-align: center; }
+  .tv.show { display: flex; }
+  .tv .tvTitle { font-size: 3.2vw; margin: 0; letter-spacing: -.02em; }
+  .tv .tvBig { font-size: 15vw; line-height: .9; font-weight: 700; letter-spacing: -.04em; color: var(--accent); }
+  .tv .tvBig small { font-size: .3em; color: var(--muted); font-weight: 400; letter-spacing: 0; }
+  .tv .tvBar { width: 80vw; height: 3vh; border-radius: 999px; background: var(--accent-soft); overflow: hidden; }
+  .tv .tvBar i { display: block; height: 100%; width: 0; border-radius: 999px;
+                 background: linear-gradient(90deg, var(--accent), var(--green)); transition: width .8s ease; }
+  .tv .tvRow { display: flex; gap: 4vw; flex-wrap: wrap; justify-content: center; font-size: 1.6vw; color: var(--muted); }
+  .tv .tvRow b { display: block; font-size: 2.2vw; color: var(--ink); }
+  .tv .tvYard { font-size: 4vw; line-height: 1.2; max-width: 86vw; }
+  .tv .exit { position: fixed; top: 16px; right: 16px; }
+  @media (max-width: 700px) {
+    .tv .tvTitle { font-size: 6vw; } .tv .tvBig { font-size: 26vw; }
+    .tv .tvRow { font-size: 3.4vw; } .tv .tvRow b { font-size: 5vw; } .tv .tvYard { font-size: 8vw; }
+  }
+
+  /* ---------- Låst hønsehus ---------- */
+  #reviewCard.locked { border-style: dashed; }
+  .lockbox { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .lockbox .house { width: 168px; flex: none; }
+  .lockinfo { flex: 1 1 240px; min-width: 0; }
+  .locktitle { margin: 0 0 4px; font-weight: 700; font-size: 1.02rem; }
+  .locktxt { margin: 0; color: var(--muted); font-size: .9rem; }
+  .bar.mini { height: 9px; margin-top: 12px; }
+  #reviewCard.locked .locktitle { color: var(--muted); }
+  #reviewCard.open .locktitle { color: var(--green); }
+
+  .house .dl, .house .dr { transform-box: fill-box; transition: transform 1s cubic-bezier(.3,1.25,.5,1); }
+  .house .dl { transform-origin: left center; }
+  .house .dr { transform-origin: right center; }
+  .house.open .dl, .house.open .dr { transform: scaleX(.11); }
+  .house .lk { transform-box: fill-box; transform-origin: center; transition: transform .6s ease-in, opacity .5s; }
+  .house.open .lk { opacity: 0; transform: translateY(30px) rotate(28deg); }
+  .house .peek { opacity: 0; transition: opacity .45s .55s; }
+  .house.open .peek { opacity: 1; }
+  .house .glow { opacity: 0; transition: opacity .5s .5s; }
+  .house.open .glow { opacity: 1; }
+  #reviewCard.locked .lockbox:hover .house { animation: nudge .5s ease-in-out; }
+  @keyframes nudge { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px) rotate(-1.5deg); } 75% { transform: translateX(4px) rotate(1.5deg); } }
+
+  /* ---------- Passord ---------- */
+  .gate { position: fixed; inset: 0; background: var(--bg); z-index: 80;
+          display: grid; place-content: center; padding: 20px; text-align: center; }
+  .gate[hidden] { display: none; }
+  .gate .inner { max-width: 340px; }
+  .gate .mascot { width: 84px; height: 84px; margin: 0 auto 8px; display: block; }
+  .gate h2 { font-size: 1.35rem; margin: 0 0 6px; }
+  .gate p { color: var(--muted); font-size: .92rem; margin: 0 0 20px; }
+  .gate form { display: flex; gap: 8px; }
+  .gate input {
+    flex: 1; min-width: 0; font: inherit; padding: 10px 14px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink); outline: none;
+  }
+  .gate input:focus { border-color: var(--accent); }
+  .gate .err { color: var(--pink); font-size: .88rem; margin: 14px 0 0; min-height: 1.3em; font-weight: 600; }
+
+  footer { margin-top: 24px; text-align: center; color: var(--muted); font-size: .8rem; }
+  footer .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+                background: var(--muted); margin-right: 5px; vertical-align: middle; }
+  footer .dot.live { background: var(--green); }
+
+  @media (max-width: 420px) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); }
+    h1 { font-size: 1.3rem; }
+  }
+  @media print { body { background: #fff; } .tools, .head-btns, .veil, .tv { display: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate" hidden>
+  <div class="inner">
+    <svg class="mascot" viewBox="0 0 64 64" aria-hidden="true">
+      <g class="bob">
+        <ellipse cx="32" cy="58" rx="16" ry="3" fill="rgba(0,0,0,.08)"/>
+        <path d="M32 8c3 0 4 3 3 5 2-1 4 0 4 2s-2 3-4 3h-6c-2 0-4-1-4-3s2-3 4-2c-1-2 0-5 3-5z" fill="#e05252"/>
+        <ellipse cx="32" cy="34" rx="18" ry="19" fill="#f6c552"/>
+        <ellipse cx="25" cy="36" rx="9" ry="11" fill="#fbdc8d" opacity=".7"/>
+        <circle cx="26" cy="28" r="2.6" fill="#3c3026"/>
+        <circle cx="27" cy="27.2" r=".9" fill="#fff"/>
+        <path d="M14 30l-6 3 6 3z" fill="#e8992b"/>
+        <path d="M17.5 29l-4.5 2.4 4.5 2.4z" fill="#e8992b"/>
+        <path d="M28 46l-2 6M34 46l1 6" stroke="#e8992b" stroke-width="2.2" stroke-linecap="round"/>
+      </g>
+    </svg>
+    <h2>Gårdsgjengen</h2>
+    <p>Høna slipper ikke inn hvem som helst. Skriv passordet.</p>
+    <form id="gateForm" autocomplete="off">
+      <input type="password" id="gatePw" placeholder="Passord" autocomplete="current-password" aria-label="Passord">
+      <button class="btn primary" type="submit" id="gateBtn">Slipp meg inn</button>
+    </form>
+    <p class="err" id="gateErr"></p>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="banner" id="banner">
+    <b>Øvingsmodus – ingenting lagres.</b>
+    Nøklene til Supabase er ikke lagt inn ennå, så dette er bare for å se hvordan siden ser ut.
+    Se <code>OPPSETT.md</code>, del 1.5.
+  </div>
+
+  <header>
+    <svg class="mascot" viewBox="0 0 64 64" aria-hidden="true">
+      <g class="bob">
+        <ellipse cx="32" cy="58" rx="16" ry="3" fill="rgba(0,0,0,.08)"/>
+        <path d="M32 8c3 0 4 3 3 5 2-1 4 0 4 2s-2 3-4 3h-6c-2 0-4-1-4-3s2-3 4-2c-1-2 0-5 3-5z" fill="#e05252"/>
+        <ellipse cx="32" cy="34" rx="18" ry="19" fill="#f6c552"/>
+        <ellipse cx="25" cy="36" rx="9" ry="11" fill="#fbdc8d" opacity=".7"/>
+        <circle cx="26" cy="28" r="2.6" fill="#3c3026"/>
+        <circle cx="27" cy="27.2" r=".9" fill="#fff"/>
+        <path d="M14 30l-6 3 6 3z" fill="#e8992b"/>
+        <path d="M17.5 29l-4.5 2.4 4.5 2.4z" fill="#e8992b"/>
+        <path d="M28 46l-2 6M34 46l1 6" stroke="#e8992b" stroke-width="2.2" stroke-linecap="round"/>
+      </g>
+    </svg>
+    <div class="head-text">
+      <h1>Gårdsgjengen</h1>
+      <p class="tagline">60 oppgaver, 180 timer — og en ny kylling i flokken for hver femte.</p>
+    </div>
+    <div class="head-btns">
+      <button class="btn" id="tvBtn" type="button">Skjermvisning</button>
+      <button class="btn ghost" id="themeBtn" type="button">Mørkt tema</button>
+      <button class="btn ghost" id="logoutBtn" type="button" hidden>Logg ut</button>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="progress-row">
+      <div class="ring">
+        <svg width="132" height="132" viewBox="0 0 132 132">
+          <circle class="track" cx="66" cy="66" r="56" fill="none" stroke-width="13"/>
+          <circle class="fill" id="ringFill" cx="66" cy="66" r="56" fill="none" stroke-width="13" stroke-dasharray="0 999"/>
+        </svg>
+        <div class="pct"><b id="pctNum">0%</b><span>ferdig</span></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="sDone">0 / 60</b><span id="sDoneLbl">oppgaver gjort</span></div>
+        <div class="stat"><b id="sHours">0 t</b><span id="sHoursLbl">av 180 timer</span></div>
+        <div class="stat"><b id="sLeft">60</b><span id="sLeftLbl">igjen på lista</span></div>
+        <div class="stat"><b id="sDays">–</b><span id="sDaysLbl">dager til frist</span></div>
+      </div>
+    </div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="lines">
+      <p class="cheer" id="cheer">Første egg venter på å klekkes. Kryss av en oppgave for å starte!</p>
+      <p class="pace" id="pace"></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Hønsegården <span class="sub">ny kylling for hver 5. oppgave</span></h2>
+    <div class="yard" id="yard"></div>
+    <div class="coop" id="coop"></div>
+  </section>
+
+  <section class="card">
+    <div class="reward">
+      <span class="gift">🎁</span>
+      <p id="rewardText"></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Oppgavene <span class="sub">klikk for å krysse av · klikk på teksten for å gi den et navn</span></h2>
+    <div class="tools">
+      <button class="btn" id="showAll" type="button">Vis alle</button>
+      <button class="btn" id="showOpen" type="button">Bare ugjorte</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" id="refreshBtn" type="button">Oppdater</button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="card locked" id="reviewCard">
+    <h2>Gjennomgangsfasen <span class="sub" id="reviewSub"></span></h2>
+
+    <div class="lockbox">
+      <svg class="house" id="house" viewBox="0 0 150 116" aria-hidden="true">
+        <rect x="0" y="100" width="150" height="16" rx="6" fill="var(--grass)"/>
+        <path d="M75 6 L140 48 L10 48 Z" fill="#b9652a"/>
+        <path d="M75 6 L140 48 L132 48 L75 13 Z" fill="#a1531f"/>
+        <rect x="20" y="48" width="110" height="54" rx="4" fill="#e8b878"/>
+        <rect x="20" y="48" width="110" height="54" rx="4" fill="none" stroke="#c9945c" stroke-width="2"/>
+        <circle cx="35" cy="60" r="4.5" fill="#c9945c"/>
+        <circle cx="115" cy="60" r="4.5" fill="#c9945c"/>
+        <rect x="50" y="58" width="50" height="44" rx="3" fill="#523d2e"/>
+        <ellipse class="glow" cx="75" cy="86" rx="22" ry="14" fill="#ffd98a" opacity="0"/>
+        <text class="peek" x="75" y="94" text-anchor="middle" font-size="22">🐔</text>
+        <g class="dl">
+          <rect x="50" y="58" width="25" height="44" fill="#a55a2a"/>
+          <path d="M53 62v36M60 62v36M67 62v36" stroke="#8d4a21" stroke-width="1.4"/>
+        </g>
+        <g class="dr">
+          <rect x="75" y="58" width="25" height="44" fill="#a55a2a"/>
+          <path d="M82 62v36M89 62v36M96 62v36" stroke="#8d4a21" stroke-width="1.4"/>
+        </g>
+        <g class="lk">
+          <path d="M71 74v-4a4 4 0 0 1 8 0v4" fill="none" stroke="#6e6357" stroke-width="2.6"/>
+          <rect x="67" y="74" width="16" height="13" rx="2.6" fill="#8d8175"/>
+          <circle cx="75" cy="80" r="1.8" fill="#5b5248"/>
+        </g>
+      </svg>
+      <div class="lockinfo">
+        <p class="locktitle" id="lockTitle">Låst</p>
+        <p class="locktxt" id="lockTxt"></p>
+        <div class="bar mini"><i id="lockBar"></i></div>
+      </div>
+    </div>
+
+    <div id="reviewOpen" hidden>
+      <div class="bar" style="margin-top:20px"><i id="reviewBar"></i></div>
+      <div class="grid" id="reviewGrid" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <footer><span class="dot" id="liveDot"></span><span id="liveTxt">Kobler til …</span></footer>
+</div>
+
+<div class="veil" id="veil">
+  <div class="modal">
+    <span class="big" id="mEmo">🐣</span>
+    <h3 id="mTitle">Hurra!</h3>
+    <p id="mText"></p>
+    <button class="btn primary" id="mClose" type="button">Videre i hønsegården</button>
+  </div>
+</div>
+
+<div class="tv" id="tv">
+  <button class="btn exit" id="tvExit" type="button">Lukk</button>
+  <h2 class="tvTitle">Gårdsgjengen</h2>
+  <div class="tvBig"><span id="tvDone">0</span><small> / 60</small></div>
+  <div class="tvBar"><i id="tvBar"></i></div>
+  <div class="tvRow">
+    <div><b id="tvHours">0 t</b>av 180 timer</div>
+    <div><b id="tvLeft">60</b>igjen</div>
+    <div><b id="tvDays">–</b>dager til frist</div>
+    <div><b id="tvPct">0 %</b>ferdig</div>
+  </div>
+  <div class="tvYard" id="tvYard"></div>
+  <div class="tvRow"><div id="tvPace"></div></div>
+  <div class="tvRow"><div id="tvLock"></div></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================================
+     INNSTILLINGER – det eneste du normalt trenger å endre
+     ========================================================================= */
+  var CONFIG = {
+    SUPABASE_URL: 'https://lrtquedqjdgbxgzdrnwf.supabase.co',   // f.eks. 'https://abcdefghijklmnop.supabase.co'
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxydHF1ZWRxamRnYnhnemRybndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNzE5MjEsImV4cCI6MjEwNTY0NzkyMX0.RsFGvDYvS7HMM2-eV6Tyak_8It5QmRDLkr3Hbf5qBYo',
+
+    START_DATO:   '2026-09-22',   // dagen dere begynte (brukes til «i rute / bak skjema»)
+    FRIST_DATO:   '2026-10-15',   // fristen
+    TIMER_PER_OPPGAVE: 3,
+
+    // Gjennomgangsfasen: antall oppgaver. 0 = hønsehuset står tomt (men fortsatt synlig). Maks 20.
+    GJENNOMGANG_ANTALL: 0,
+    // Hvor mange av de 60 som må være gjort før hønsehuset låses opp. Sett til 0 for å åpne med en gang.
+    GJENNOMGANG_LAS_OPP_VED: 60,
+
+    // Passordet settes i databasen (se supabase.sql). Dette brukes BARE i øvingsmodus,
+    // altså når siden kjøres uten Supabase.
+    PASSORD_OVINGSMODUS: 'vielskerdyr',
+
+    BELONNING: 'Belønningen er ikke bestemt ennå — men den kommer når alle 60 er i havn. Forslag mottas med takk. 👀'
+  };
+  /* ========================================================================= */
+
+  var TOTAL = 60;
+  var HPT = CONFIG.TIMER_PER_OPPGAVE;
+  var LOCAL_KEY = "gaardsgjengen.demo.v2";
+
+  var FLOKKEN = [
+    { at: 5,  emo: "🐣", nm: "Pip",     msg: "Det første egget sprakk. Pip er ute, og litt overrasket over alt." },
+    { at: 10, emo: "🐣", nm: "Dotte",   msg: "Dotte klekket! Hun piper høyt og løper i feil retning." },
+    { at: 15, emo: "🐤", nm: "Frida",   msg: "Frida er på plass og har allerede funnet det beste støvbadet." },
+    { at: 20, emo: "🐤", nm: "Bølla",   msg: "Bølla kom, så seg om, og bestemte at hun eier gårdsplassen." },
+    { at: 25, emo: "🐤", nm: "Rut",     msg: "Rut er inne — og halvveis er rett rundt hjørnet." },
+    { at: 30, emo: "🐔", nm: "Solveig", msg: "Halvveis! Solveig har blitt voksen høne og synes dere bør ta en pause." },
+    { at: 35, emo: "🐔", nm: "Klara",   msg: "Klara har flyttet inn og lagt sitt første egg. Det går veien." },
+    { at: 40, emo: "🐔", nm: "Mathilde",msg: "Mathilde er her. To tredeler unnagjort — nydelig jobbet." },
+    { at: 45, emo: "🐔", nm: "Gullrun", msg: "Gullrun brer ut vingene. Bare femten igjen nå." },
+    { at: 50, emo: "🐔", nm: "Petra",   msg: "Petra kom akkurat i tide til innspurten. Ti igjen!" },
+    { at: 55, emo: "🐓", nm: "Harald",  msg: "Hanen Harald galer over de siste fem oppgavene." },
+    { at: 60, emo: "🏡", nm: "Full gård", msg: "Alle 60 er gjort. 180 timer, tolv høns og en full hønsegård — gratulerer!" }
+  ];
+
+  var CHEERS = [
+    "Godt jobbet! Tre timer nærmere mål.",
+    "Én mindre på lista. Høna nikker anerkjennende.",
+    "Sånn ja — det står bra til i hønsegården.",
+    "Avkrysset og ferdig. Fortsett sånn!",
+    "Nydelig. Den oppgaven kommer ikke tilbake.",
+    "Tre timer godt brukt.",
+    "Kyllingene hopper av glede.",
+    "Stø kurs! Neste kylling nærmer seg.",
+    "Bra innsats — flokken vokser.",
+    "Krysset av. Du fortjener en kaffe."
+  ];
+
+  var CONFETTI = ["🌾", "✨", "🥚", "🐣", "🌻", "🪶"];
+  var CHECK = '<svg viewBox="0 0 16 16" fill="none"><path d="M2.5 8.5l4 4 7-9" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  var REVIEW_N = Math.max(0, Math.min(20, CONFIG.GJENNOMGANG_ANTALL | 0));
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* =========================== Lagring =================================== */
+
+  var live = !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY);
+  var client = null;
+  var tasks = {};        // id -> { id, phase, label, done }
+
+  function blankTasks() {
+    var t = {};
+    for (var i = 1; i <= TOTAL; i++) t[i] = { id: i, phase: "hoved", label: "Nummer " + i, done: false };
+    for (var j = 61; j <= 80; j++) t[j] = { id: j, phase: "gjennomgang", label: "Gjennomgang " + (j - 60), done: false };
+    return t;
+  }
+
+  function saveLocal() {
+    if (live) return;
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(tasks)); } catch (e) {}
+  }
+
+  function loadLocal() {
+    tasks = blankTasks();
+    try {
+      var raw = localStorage.getItem(LOCAL_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      Object.keys(tasks).forEach(function (k) {
+        if (d[k]) {
+          tasks[k].done = !!d[k].done;
+          if (typeof d[k].label === "string" && d[k].label.trim()) tasks[k].label = d[k].label;
+        }
+      });
+    } catch (e) {}
+  }
+
+  function setStatus(ok, txt) {
+    $("liveDot").classList.toggle("live", !!ok);
+    $("liveTxt").textContent = txt;
+  }
+
+  async function fetchAll() {
+    var res = await client.from("gg_tasks").select("id, phase, label, done").order("id");
+    if (res.error) throw res.error;
+    if (!res.data || !res.data.length) throw new Error("Tabellen gg_tasks er tom – kjør supabase.sql på nytt.");
+    var t = blankTasks();
+    res.data.forEach(function (r) {
+      t[r.id] = { id: r.id, phase: r.phase || "hoved", label: r.label || ("Nummer " + r.id), done: !!r.done };
+    });
+    tasks = t;
+  }
+
+  async function pushDone(id, done) {
+    var res = await client.from("gg_tasks")
+      .update({ done: done, done_at: done ? new Date().toISOString() : null })
+      .eq("id", id);
+    if (res.error) throw res.error;
+  }
+
+  async function pushLabel(id, label) {
+    var res = await client.from("gg_tasks").update({ label: label }).eq("id", id);
+    if (res.error) throw res.error;
+  }
+
+  /* =========================== Tema ====================================== */
+
+  var themeBtn = $("themeBtn");
+  function storedTheme() {
+    try { return localStorage.getItem("gg.theme"); } catch (e) { return null; }
+  }
+  function isDark() {
+    var t = storedTheme();
+    if (t) return t === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  function applyTheme() {
+    var t = storedTheme();
+    if (t) document.documentElement.setAttribute("data-theme", t);
+    else document.documentElement.removeAttribute("data-theme");
+    themeBtn.textContent = isDark() ? "Lyst tema" : "Mørkt tema";
+  }
+  themeBtn.addEventListener("click", function () {
+    try { localStorage.setItem("gg.theme", isDark() ? "light" : "dark"); } catch (e) {}
+    applyTheme();
+  });
+  try { applyTheme(); } catch (e) {}
+
+  /* =========================== Oppbygging ================================ */
+
+  var nodes = {};
+
+  function buildCard(id, target) {
+    var el = document.createElement("div");
+    el.className = "task";
+    var isReview = id > 60;
+    el.innerHTML =
+      '<div class="top"><span class="num">' + (isReview ? "G" + (id - 60) : "#" + id) + '</span>' +
+      '<span class="box">' + CHECK + '</span></div>' +
+      '<div class="label" contenteditable="true" spellcheck="false"></div>' +
+      '<div class="hrs">' + HPT + ' timer</div>';
+
+    var label = el.querySelector(".label");
+    label.textContent = tasks[id].label;
+
+    label.addEventListener("click", function (e) { e.stopPropagation(); });
+    label.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); label.blur(); }
+    });
+    label.addEventListener("blur", async function () {
+      var txt = label.textContent.replace(/\s+/g, " ").trim();
+      if (!txt) txt = isReview ? "Gjennomgang " + (id - 60) : "Nummer " + id;
+      if (txt === tasks[id].label) { label.textContent = txt; return; }
+      tasks[id].label = txt;
+      label.textContent = txt;
+      if (live) { try { await pushLabel(id, txt); } catch (e) { setStatus(false, "Fikk ikke lagret navnet."); } }
+      else saveLocal();
+    });
+
+    el.addEventListener("click", function () { toggle(id, el); });
+    target.appendChild(el);
+    nodes[id] = el;
+  }
+
+  function buildAll() {
+    var grid = $("grid"); grid.innerHTML = "";
+    nodes = {};
+    for (var i = 1; i <= TOTAL; i++) buildCard(i, grid);
+
+    if (REVIEW_N > 0) {
+      var rg = $("reviewGrid"); rg.innerHTML = "";
+      for (var j = 61; j <= 60 + REVIEW_N; j++) buildCard(j, rg);
+    }
+  }
+
+  var pens = FLOKKEN.map(function (a) {
+    var p = document.createElement("div");
+    p.className = "pen";
+    p.innerHTML = '<span class="emo">' + a.emo + '</span><span class="nm">' + a.nm + '</span><span class="at">' + a.at + ' stk</span>';
+    $("coop").appendChild(p);
+    return p;
+  });
+
+  $("rewardText").innerHTML = escapeHtml(CONFIG.BELONNING) +
+    '<small>Fristen er ' + norskDato(CONFIG.FRIST_DATO) + '.</small>';
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function norskDato(iso) {
+    var d = new Date(iso + "T12:00:00");
+    if (isNaN(d)) return iso;
+    return d.toLocaleDateString("nb-NO", { day: "numeric", month: "long", year: "numeric" });
+  }
+
+  /* =========================== Avkryssing ================================ */
+
+  var pending = {};
+
+  async function toggle(id, el) {
+    if (pending[id]) return;
+    var before = doneCount();
+    var next = !tasks[id].done;
+
+    tasks[id].done = next;
+    // Settes før render, slik at en eventuell opplåsingsmelding får siste ord
+    setCheer(next ? CHEERS[Math.floor(Math.random() * CHEERS.length)] : "Krysset av igjen — det skjer.");
+    render();
+
+    if (next) {
+      burst(el);
+      if (id <= TOTAL) checkMilestone(before, doneCount());
+    }
+
+    if (live) {
+      pending[id] = true;
+      el.classList.add("busy");
+      try {
+        await pushDone(id, next);
+        setStatus(true, "Tilkoblet — alle ser det samme.");
+      } catch (e) {
+        tasks[id].done = !next;
+        render();
+        setStatus(false, "Fikk ikke lagret. Sjekk nettforbindelsen og prøv igjen.");
+      } finally {
+        pending[id] = false;
+        el.classList.remove("busy");
+      }
+    } else {
+      saveLocal();
+    }
+
+    if (filterOpen) setTimeout(applyFilter, 320);
+  }
+
+  function checkMilestone(before, after) {
+    for (var k = 0; k < FLOKKEN.length; k++) {
+      if (FLOKKEN[k].at > before && FLOKKEN[k].at <= after) { celebrate(FLOKKEN[k]); return; }
+    }
+  }
+
+  function setCheer(txt) { $("cheer").textContent = txt; }
+
+  function doneCount() {
+    var n = 0;
+    for (var i = 1; i <= TOTAL; i++) if (tasks[i] && tasks[i].done) n++;
+    return n;
+  }
+
+  function reviewDone() {
+    var n = 0;
+    for (var j = 61; j <= 60 + REVIEW_N; j++) if (tasks[j] && tasks[j].done) n++;
+    return n;
+  }
+
+  /* =========================== Tegning =================================== */
+
+  var RING = 2 * Math.PI * 56;
+
+  function dagerTil(iso) {
+    var d = new Date(iso + "T23:59:59");
+    if (isNaN(d)) return null;
+    return Math.ceil((d - new Date()) / 86400000);
+  }
+
+  function paceText(n) {
+    var left = TOTAL - n;
+    var days = dagerTil(CONFIG.FRIST_DATO);
+    var el = $("pace");
+    el.className = "pace";
+
+    if (left === 0) { el.textContent = "Alt er gjort. Fristen kan få slappe av."; el.classList.add("ahead"); return "Alt er gjort!"; }
+    if (days === null) { el.textContent = ""; return ""; }
+    if (days <= 0) { el.textContent = left + " oppgaver gjenstår etter fristen."; el.classList.add("behind"); return left + " igjen etter fristen"; }
+
+    var perDay = left / days;
+    var start = new Date(CONFIG.START_DATO + "T00:00:00");
+    var end = new Date(CONFIG.FRIST_DATO + "T23:59:59");
+    var total = (end - start) / 86400000;
+    var gone = (new Date() - start) / 86400000;
+    var forventet = total > 0 ? Math.round(TOTAL * Math.max(0, Math.min(1, gone / total))) : 0;
+    var diff = n - forventet;
+
+    var txt = "Må gjøre " + perDay.toFixed(1).replace(".", ",") + " oppgaver om dagen for å rekke fristen. ";
+    if (diff >= 3) { txt += "Dere ligger " + diff + " foran skjema."; el.classList.add("ahead"); }
+    else if (diff <= -3) { txt += "Dere ligger " + Math.abs(diff) + " bak skjema."; el.classList.add("behind"); }
+    else { txt += "Dere er i rute."; el.classList.add("ahead"); }
+    el.textContent = txt;
+    return txt;
+  }
+
+  function render() {
+    var n = doneCount();
+    var pct = Math.round((n / TOTAL) * 100);
+
+    for (var i = 1; i <= 80; i++) {
+      if (nodes[i]) nodes[i].classList.toggle("done", !!(tasks[i] && tasks[i].done));
+    }
+    for (var i2 = 1; i2 <= 80; i2++) {
+      if (nodes[i2]) {
+        var lab = nodes[i2].querySelector(".label");
+        if (lab && document.activeElement !== lab && lab.textContent !== tasks[i2].label) lab.textContent = tasks[i2].label;
+      }
+    }
+
+    $("ringFill").setAttribute("stroke-dasharray", (RING * n / TOTAL) + " " + RING);
+    $("pctNum").textContent = pct + "%";
+    $("bar").style.width = pct + "%";
+    $("sDone").textContent = n + " / " + TOTAL;
+    $("sHours").textContent = (n * HPT) + " t";
+    $("sHoursLbl").textContent = "av " + (TOTAL * HPT) + " timer";
+    $("sLeft").textContent = String(TOTAL - n);
+
+    var days = dagerTil(CONFIG.FRIST_DATO);
+    $("sDays").textContent = days === null ? "–" : (days > 0 ? days : 0);
+    $("sDaysLbl").textContent = days !== null && days <= 0 ? "fristen er passert" : "dager til frist";
+
+    for (var j = 0; j < FLOKKEN.length; j++) pens[j].classList.toggle("on", n >= FLOKKEN[j].at);
+
+    var yard = $("yard");
+    var have = FLOKKEN.filter(function (a) { return n >= a.at; });
+    if (!have.length) yard.innerHTML = '<span class="empty">Hønsegården er tom. Første kylling klekkes på oppgave 5. 🥚</span>';
+    else yard.innerHTML = have.map(function (a, k) {
+      return '<span class="hen" style="animation-delay:' + (k * .23).toFixed(2) + 's" title="' + a.nm + '">' + a.emo + '</span>';
+    }).join("");
+
+    var lockTxt = renderLock(n);
+
+    var pace = paceText(n);
+    renderTv(n, pct, days, pace, have, lockTxt);
+  }
+
+  /* --------- Det låste hønsehuset --------- */
+
+  var UNLOCK_AT = Math.max(0, Math.min(TOTAL, CONFIG.GJENNOMGANG_LAS_OPP_VED | 0));
+  var wasLocked = null;
+
+  function renderLock(n) {
+    var card = $("reviewCard");
+    var house = $("house");
+    var open = n >= UNLOCK_AT;
+    var igjen = Math.max(0, UNLOCK_AT - n);
+
+    card.classList.toggle("locked", !open);
+    card.classList.toggle("open", open);
+    house.classList.toggle("open", open);
+    $("lockBar").style.width = (UNLOCK_AT ? Math.round((Math.min(n, UNLOCK_AT) / UNLOCK_AT) * 100) : 100) + "%";
+
+    var tv;
+    if (!open) {
+      $("reviewOpen").hidden = true;
+      $("reviewSub").textContent = "låst";
+      $("lockTitle").textContent = "Låst 🔒";
+      $("lockTxt").textContent = "Hønsehuset åpner seg når alle " + UNLOCK_AT + " oppgavene er krysset av. " +
+        igjen + (igjen === 1 ? " oppgave igjen." : " oppgaver igjen.");
+      tv = "🔒 Hønsehuset åpnes om " + igjen + (igjen === 1 ? " oppgave" : " oppgaver");
+    } else if (REVIEW_N === 0) {
+      $("reviewOpen").hidden = true;
+      $("reviewSub").textContent = "åpnet, men tom";
+      $("lockTitle").textContent = "Hønsehuset er åpnet! 🎉";
+      $("lockTxt").textContent = "Alle " + UNLOCK_AT + " er i havn. Gjennomgangsoppgavene legges inn her " +
+        "så snart dere vet hva de skal være.";
+      tv = "🪺 Hønsehuset er åpnet";
+    } else {
+      var rn = reviewDone();
+      $("reviewOpen").hidden = false;
+      $("reviewBar").style.width = Math.round((rn / REVIEW_N) * 100) + "%";
+      $("reviewSub").textContent = rn + " av " + REVIEW_N;
+      $("lockTitle").textContent = "Hønsehuset er åpnet! 🎉";
+      $("lockTxt").textContent = rn + " av " + REVIEW_N + " gjennomgangsoppgaver er gjort.";
+      tv = "🪺 Gjennomgangen: " + rn + " av " + REVIEW_N;
+    }
+
+    if (wasLocked === true && open) {
+      rain(40);
+      setCheer("Hønsehuset gikk opp! Gjennomgangsfasen er låst opp.");
+    }
+    wasLocked = !open;
+    return tv;
+  }
+
+  function renderTv(n, pct, days, pace, have, lockTxt) {
+    $("tvLock").textContent = lockTxt || "";
+    $("tvDone").textContent = n;
+    $("tvBar").style.width = pct + "%";
+    $("tvHours").textContent = (n * HPT) + " t";
+    $("tvLeft").textContent = TOTAL - n;
+    $("tvDays").textContent = days === null ? "–" : (days > 0 ? days : 0);
+    $("tvPct").textContent = pct + " %";
+    $("tvPace").textContent = pace;
+    $("tvYard").textContent = have.length ? have.map(function (a) { return a.emo; }).join(" ") : "🥚";
+  }
+
+  /* =========================== Feiring =================================== */
+
+  var veil = $("veil");
+  $("mClose").addEventListener("click", function () { veil.classList.remove("show"); });
+  veil.addEventListener("click", function (e) { if (e.target === veil) veil.classList.remove("show"); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if (veil.classList.contains("show")) veil.classList.remove("show");
+    else if ($("tv").classList.contains("show")) closeTv();
+  });
+
+  function celebrate(a) {
+    $("mEmo").textContent = a.emo;
+    $("mTitle").textContent = a.at === TOTAL ? "Hele lista er gjort!" : a.nm + " er klekket!";
+    $("mText").textContent = a.msg;
+    veil.classList.add("show");
+    rain(a.at === TOTAL ? 70 : 28);
+  }
+
+  function burst(el) {
+    var r = el.getBoundingClientRect();
+    for (var i = 0; i < 8; i++) fly(r.left + r.width / 2, r.top + r.height / 2, CONFETTI[i % CONFETTI.length], 1);
+  }
+
+  function rain(n) {
+    for (var i = 0; i < n; i++) {
+      (function (d) {
+        setTimeout(function () {
+          fly(Math.random() * window.innerWidth, -20, CONFETTI[Math.floor(Math.random() * CONFETTI.length)], 2);
+        }, d * 26);
+      })(i);
+    }
+  }
+
+  function fly(x, y, ch, mode) {
+    var s = document.createElement("span");
+    s.className = "fx";
+    s.textContent = ch;
+    s.style.left = x + "px";
+    s.style.top = y + "px";
+    document.body.appendChild(s);
+    var dx, dy, dur;
+    if (mode === 1) { dx = (Math.random() - .5) * 150; dy = -40 - Math.random() * 90; dur = 900; }
+    else { dx = (Math.random() - .5) * 120; dy = window.innerHeight + 60; dur = 2200 + Math.random() * 1400; }
+    var anim = s.animate(
+      [{ transform: "translate(0,0) rotate(0deg)", opacity: 1 },
+       { transform: "translate(" + dx + "px," + dy + "px) rotate(" + (Math.random() * 720 - 360) + "deg)", opacity: 0 }],
+      { duration: dur, easing: mode === 1 ? "cubic-bezier(.2,.7,.4,1)" : "linear" }
+    );
+    anim.onfinish = function () { s.remove(); };
+  }
+
+  /* =========================== Filter ==================================== */
+
+  var filterOpen = false;
+  function applyFilter() {
+    Object.keys(nodes).forEach(function (id) {
+      nodes[id].style.display = (filterOpen && tasks[id] && tasks[id].done) ? "none" : "";
+    });
+  }
+  $("showAll").addEventListener("click", function () { filterOpen = false; applyFilter(); });
+  $("showOpen").addEventListener("click", function () { filterOpen = true; applyFilter(); });
+
+  /* =========================== Skjermvisning ============================= */
+
+  function openTv() {
+    $("tv").classList.add("show");
+    render();
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(function () {});
+    }
+  }
+  function closeTv() {
+    $("tv").classList.remove("show");
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {});
+  }
+  $("tvBtn").addEventListener("click", openTv);
+  $("tvExit").addEventListener("click", closeTv);
+
+  /* =========================== Synk ====================================== */
+
+  async function refresh(showCelebration) {
+    if (!live) return;
+    var before = doneCount();
+    try {
+      await fetchAll();
+      render();
+      setStatus(true, "Tilkoblet — alle ser det samme.");
+      if (showCelebration) checkMilestone(before, doneCount());
+    } catch (e) {
+      setStatus(false, "Mistet kontakten med databasen. Prøver igjen.");
+    }
+  }
+
+  $("refreshBtn").addEventListener("click", function () { refresh(false); });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(false); });
+
+  /* =========================== Passord =================================== */
+
+  var PW_KEY = "gg.pw";
+  function savedPw() { try { return localStorage.getItem(PW_KEY); } catch (e) { return null; } }
+  function storePw(v) { try { localStorage.setItem(PW_KEY, v); } catch (e) {} }
+  function clearPw() { try { localStorage.removeItem(PW_KEY); } catch (e) {} }
+
+  function makeClient(pw) {
+    return window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+      global: { headers: { "x-gg-passord": pw } }
+    });
+  }
+
+  function goDemo(msg) {
+    live = false;
+    client = null;
+    var b = $("banner");
+    b.classList.add("show");
+    if (msg) {
+      b.innerHTML = "<b>Fikk ikke kontakt med databasen.</b> Siden kjører i øvingsmodus – " +
+        "ingenting deles med de andre. Feil: " + escapeHtml(msg);
+    }
+  }
+
+  // true = riktig passord · false = feil passord · kaster hvis databasen ikke svarer
+  async function tryPw(pw) {
+    if (!pw) return false;
+    if (!live) return pw === CONFIG.PASSORD_OVINGSMODUS;
+    var c = makeClient(pw);
+    var res = await c.from("gg_tasks").select("id").limit(1);
+    if (res.error) throw res.error;
+    if (!res.data || !res.data.length) return false;   // reglene ga null rader = feil passord
+    client = c;
+    return true;
+  }
+
+  async function pwOrDemo(pw) {
+    try { return await tryPw(pw); }
+    catch (e) {
+      goDemo(e && e.message ? e.message : String(e));
+      try { return await tryPw(pw); } catch (e2) { return false; }
+    }
+  }
+
+  function openGate() {
+    return new Promise(function (resolve) {
+      var gate = $("gate"), form = $("gateForm"), inp = $("gatePw"), err = $("gateErr"), btn = $("gateBtn");
+      gate.hidden = false;
+      document.body.style.overflow = "hidden";
+      setTimeout(function () { inp.focus(); }, 60);
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var pw = inp.value.trim();
+        if (!pw) return;
+        btn.disabled = true;
+        err.textContent = "";
+        var ok = await pwOrDemo(pw);
+        btn.disabled = false;
+        if (ok) {
+          storePw(pw);
+          gate.hidden = true;
+          document.body.style.overflow = "";
+          resolve();
+        } else {
+          err.textContent = "Feil passord. Høna rister på hodet.";
+          inp.select();
+        }
+      });
+    });
+  }
+
+  $("logoutBtn").addEventListener("click", function () { clearPw(); location.reload(); });
+
+  /* =========================== Oppstart ================================== */
+
+  async function start() {
+    if (!live) $("banner").classList.add("show");
+
+    var pw = savedPw();
+    var inne = false;
+    if (pw) {
+      inne = await pwOrDemo(pw);
+      if (!inne) clearPw();
+    }
+    if (!inne) await openGate();
+
+    $("logoutBtn").hidden = false;
+
+    if (live) {
+      try { await fetchAll(); }
+      catch (e) { goDemo(e && e.message ? e.message : String(e)); }
+    }
+    if (!live) loadLocal();
+
+    buildAll();
+    render();
+    applyFilter();
+
+    if (!live) { setStatus(false, "Øvingsmodus – lagres bare i denne nettleseren."); return; }
+
+    setStatus(true, "Tilkoblet — alle ser det samme.");
+
+    // Live oppdatering når noen andre krysser av
+    try {
+      client.channel("gg")
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "gg_tasks" }, function (p) {
+          var r = p["new"];
+          if (!r || !tasks[r.id]) return;
+          var before = doneCount();
+          tasks[r.id].done = !!r.done;
+          if (typeof r.label === "string" && r.label) tasks[r.id].label = r.label;
+          render();
+          if (r.id <= TOTAL && r.done) checkMilestone(before, doneCount());
+        })
+        .subscribe();
+    } catch (e) {}
+
+    // Reservehjul: hent på nytt hvert 10. sekund uansett (passordet gjør at den
+    // direkte live-koblingen kan være avslått – da er det denne som holder alt i takt)
+    setInterval(function () { if (!document.hidden) refresh(true); }, 10000);
+    // Nedtellingen skal stemme selv om siden står på en skjerm i dagevis
+    setInterval(render, 600000);
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>
