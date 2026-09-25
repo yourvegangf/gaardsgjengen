@@ -107,6 +107,13 @@
   .ring .pct b { font-size: 1.7rem; line-height: 1; display: block; letter-spacing: -.03em; }
   .ring .pct span { font-size: .72rem; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
 
+  .rings { display: flex; align-items: center; gap: 12px; flex: none; }
+  .ring.small { width: 96px; height: 96px; }
+  .ring.small .pct b { font-size: 1.25rem; }
+  .ring.small .pct span { font-size: .55rem; letter-spacing: 0; }
+  .ring .track.alt { stroke: var(--green-soft); }
+  .ring .fill.alt { stroke: var(--green); }
+
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)); gap: 10px; flex: 1 1 320px; }
   .stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px; }
   .stat b { display: block; font-size: 1.26rem; letter-spacing: -.02em; }
@@ -361,7 +368,7 @@
     </svg>
     <div class="head-text">
       <h1>Gårdsgjengen</h1>
-      <p class="tagline">60 oppgaver, 180 timer — og en ny kylling i flokken for hver femte.</p>
+      <p class="tagline">60 oppgaver og 60 gjennomganger, 300 timer — og en ny kylling i flokken for hver femte.</p>
     </div>
     <div class="head-btns">
       <button class="btn" id="tvBtn" type="button">Skjermvisning</button>
@@ -372,12 +379,21 @@
 
   <section class="card">
     <div class="progress-row">
-      <div class="ring">
-        <svg width="132" height="132" viewBox="0 0 132 132">
-          <circle class="track" cx="66" cy="66" r="56" fill="none" stroke-width="13"/>
-          <circle class="fill" id="ringFill" cx="66" cy="66" r="56" fill="none" stroke-width="13" stroke-dasharray="0 999"/>
-        </svg>
-        <div class="pct"><b id="pctNum">0%</b><span>av alt</span></div>
+      <div class="rings">
+        <div class="ring">
+          <svg width="132" height="132" viewBox="0 0 132 132">
+            <circle class="track" cx="66" cy="66" r="56" fill="none" stroke-width="13"/>
+            <circle class="fill" id="ringFill" cx="66" cy="66" r="56" fill="none" stroke-width="13" stroke-dasharray="0 999"/>
+          </svg>
+          <div class="pct"><b id="pctNum">0%</b><span>av alt</span></div>
+        </div>
+        <div class="ring small">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle class="track alt" cx="48" cy="48" r="41" fill="none" stroke-width="10"/>
+            <circle class="fill alt" id="ringMain" cx="48" cy="48" r="41" fill="none" stroke-width="10" stroke-dasharray="0 999"/>
+          </svg>
+          <div class="pct"><b id="pctMain">0%</b><span>hovedlista</span></div>
+        </div>
       </div>
       <div class="stats">
         <div class="stat"><b id="sDone">0 / 60</b><span id="sDoneLbl">hovedoppgaver gjort</span></div>
@@ -859,7 +875,8 @@
 
   /* =========================== Tegning =================================== */
 
-  var RING = 2 * Math.PI * 56;
+  var RING = 2 * Math.PI * 56;          // store ringen: alle 300 timene
+  var RING_S = 2 * Math.PI * 41;        // lille ringen: bare de 60 hovedoppgavene
 
   // Alle tallene panelet bygger på. Hovedlista: 3 t per oppgave.
   // Gjennomgangen: 1 t per avkryssing, altså 2 t per oppgave.
@@ -950,6 +967,10 @@
 
     $("ringFill").setAttribute("stroke-dasharray", (RING * T.gjort / T.totalt) + " " + RING);
     $("pctNum").textContent = T.pct + "%";
+
+    $("ringMain").setAttribute("stroke-dasharray", (RING_S * n / TOTAL) + " " + RING_S);
+    $("pctMain").textContent = Math.round((n / TOTAL) * 100) + "%";
+
     $("bar").style.width = T.pct + "%";
     $("sDone").textContent = n + " / " + TOTAL;
     $("sHours").textContent = T.gjort + " t";
