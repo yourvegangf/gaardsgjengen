@@ -20,7 +20,9 @@
     --green: #6fa85c;
     --green-soft: #e2f0d9;
     --pink: #e79a9a;
-    --grass: #d9ecc9;
+    --grass: #cfe6bb;
+    --sky: #dceff7;
+    --sun: #ffd978;
     --shadow: 0 2px 0 rgba(60,48,38,.06), 0 10px 24px -14px rgba(60,48,38,.35);
     --r: 16px;
   }
@@ -29,7 +31,8 @@
       --bg: #241e19; --bg-2: #2b241e; --surface: #2f2721; --surface-2: #372e26;
       --ink: #f6ece0; --muted: #b5a491; --line: #463b31;
       --accent: #f2b45d; --accent-ink: #2a2118; --accent-soft: #4a3a22;
-      --green: #8cc275; --green-soft: #33402c; --pink: #d98f8f; --grass: #36452e;
+      --green: #8cc275; --green-soft: #33402c; --pink: #d98f8f;
+      --grass: #3a4b31; --sky: #2f4653; --sun: #c9973f;
       --shadow: 0 2px 0 rgba(0,0,0,.2), 0 10px 24px -14px rgba(0,0,0,.6);
     }
   }
@@ -37,7 +40,8 @@
     --bg: #241e19; --bg-2: #2b241e; --surface: #2f2721; --surface-2: #372e26;
     --ink: #f6ece0; --muted: #b5a491; --line: #463b31;
     --accent: #f2b45d; --accent-ink: #2a2118; --accent-soft: #4a3a22;
-    --green: #8cc275; --green-soft: #33402c; --pink: #d98f8f; --grass: #36452e;
+    --green: #8cc275; --green-soft: #33402c; --pink: #d98f8f;
+    --grass: #3a4b31; --sky: #2f4653; --sun: #c9973f;
     --shadow: 0 2px 0 rgba(0,0,0,.2), 0 10px 24px -14px rgba(0,0,0,.6);
   }
 
@@ -120,13 +124,34 @@
 
   /* ---------- Flokken ---------- */
   .yard {
-    background: var(--grass); border-radius: 14px; padding: 14px 12px 10px;
-    min-height: 62px; display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-end;
-    margin-bottom: 14px;
+    position: relative; overflow: hidden; border-radius: 16px;
+    background: linear-gradient(180deg, var(--sky) 0%, var(--sky) 46%, var(--grass) 46%, var(--grass) 100%);
+    min-height: 192px; padding: 14px 16px 18px; margin-bottom: 10px;
+    display: flex; flex-wrap: wrap; gap: 4px 12px;
+    align-items: flex-end; align-content: flex-end; justify-content: center;
   }
-  .yard .empty { color: var(--muted); font-size: .85rem; padding: 4px 4px 8px; }
-  .yard .hen { font-size: 1.9rem; line-height: 1; animation: peck 2.4s ease-in-out infinite; }
-  @keyframes peck { 0%,100% { transform: translateY(0) rotate(0); } 45% { transform: translateY(-4px) rotate(-6deg); } }
+  .yard .sun {
+    position: absolute; top: 14px; right: 18px; width: 34px; height: 34px; border-radius: 50%;
+    background: var(--sun); box-shadow: 0 0 0 9px rgba(255, 217, 120, .26);
+  }
+  .yard .cloud {
+    position: absolute; background: var(--surface); opacity: .8; border-radius: 999px; height: 13px;
+  }
+  .yard .cloud.a { top: 26px; left: 10%; width: 54px; }
+  .yard .cloud.b { top: 46px; left: 32%; width: 38px; height: 11px; opacity: .6; }
+  .yard .cloud.c { top: 18px; left: 62%; width: 44px; opacity: .65; }
+  .yard .empty {
+    color: var(--muted); font-size: .88rem; margin: auto; text-align: center;
+    position: relative; z-index: 1; padding-bottom: 28px;
+  }
+  .yard .hen, .yard .toy { position: relative; z-index: 1; line-height: 1; }
+  .yard .hen { font-size: 2.3rem; animation: peck 2.4s ease-in-out infinite; }
+  .yard .toy { font-size: 1.95rem; animation: sway 3.6s ease-in-out infinite; }
+  @keyframes peck { 0%,100% { transform: translateY(0) rotate(0); } 45% { transform: translateY(-5px) rotate(-7deg); } }
+  @keyframes sway { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+
+  .yardinfo { margin: 0 0 14px; font-size: .85rem; color: var(--muted); }
+  .yardinfo b { color: var(--ink); }
 
   .coop { display: grid; grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); gap: 9px; }
   .pen { background: var(--surface-2); border: 1px dashed var(--line); border-radius: 13px;
@@ -201,6 +226,26 @@
     .tv .tvTitle { font-size: 6vw; } .tv .tvBig { font-size: 26vw; }
     .tv .tvRow { font-size: 3.4vw; } .tv .tvRow b { font-size: 5vw; } .tv .tvYard { font-size: 8vw; }
   }
+
+  /* ---------- Gjennomgangskort med to avkryssinger ---------- */
+  #reviewGrid { grid-template-columns: repeat(auto-fill, minmax(186px, 1fr)); }
+  .task.two { cursor: default; min-height: 116px; }
+  .task.two .top { margin-bottom: -2px; }
+  .steps { display: flex; flex-direction: column; gap: 5px; margin-top: auto; }
+  .step {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 9px;
+    padding: 5px 8px; font: inherit; font-size: .78rem; color: var(--muted);
+    cursor: pointer; text-align: left; transition: .16s;
+  }
+  .step:hover { border-color: var(--accent); color: var(--ink); }
+  .step .box { margin-left: 0; width: 17px; height: 17px; border-radius: 5px; }
+  .step .box svg { width: 10px; height: 10px; }
+  .step.on { background: var(--green-soft); border-color: var(--green); color: var(--ink); font-weight: 600; }
+  .step.on .box { background: var(--green); border-color: var(--green); }
+  .step.on .box svg { opacity: 1; transform: scale(1); }
+  .task.two.done .step { background: var(--surface); }
+  .task.two.done .step.on { background: var(--green-soft); }
 
   /* ---------- Låst hønsehus ---------- */
   #reviewCard.locked { border-style: dashed; }
@@ -338,8 +383,9 @@
   </section>
 
   <section class="card">
-    <h2>Hønsegården <span class="sub">ny kylling for hver 5. oppgave</span></h2>
+    <h2>Hønsegården <span class="sub">ny kylling for hver 5. oppgave · ny godbit for hver 5. gjennomgang</span></h2>
     <div class="yard" id="yard"></div>
+    <p class="yardinfo" id="yardInfo"></p>
     <div class="coop" id="coop"></div>
   </section>
 
@@ -446,10 +492,12 @@
     FRIST_DATO:   '2026-10-15',   // fristen
     TIMER_PER_OPPGAVE: 3,
 
-    // Gjennomgangsfasen: antall oppgaver. 0 = hønsehuset står tomt (men fortsatt synlig). Maks 20.
-    GJENNOMGANG_ANTALL: 0,
+    // Gjennomgangsfasen: antall oppgaver. 0 = hønsehuset står tomt (men fortsatt synlig). Maks 60.
+    GJENNOMGANG_ANTALL: 60,
     // Hvor mange av de 60 som må være gjort før hønsehuset låses opp. Sett til 0 for å åpne med en gang.
-    GJENNOMGANG_LAS_OPP_VED: 60,
+    GJENNOMGANG_LAS_OPP_VED: 30,
+    // De to avkryssingene hver gjennomgangsoppgave har. Døp dem om til det dere faktisk gjør.
+    GJENNOMGANG_STEG: ['Språkvask', 'Faglig sjekk'],
 
     // Passordet settes i databasen (se supabase.sql). Dette brukes BARE i øvingsmodus,
     // altså når siden kjøres uten Supabase.
@@ -478,6 +526,34 @@
     { at: 60, emo: "🏡", nm: "Full gård", msg: "Alle 60 er gjort. 180 timer, tolv høns og en full hønsegård — gratulerer!" }
   ];
 
+  // Belønning til flokken for hver 5. ferdige gjennomgangsoppgave
+  var GODBITER = [
+    { at: 5,  emo: "🥬", nm: "salathode",     tittel: "Salathode på snor!",
+      msg: "Ei salathode henger og svinger i gården. Bølla gikk til angrep med en gang." },
+    { at: 10, emo: "🍉", nm: "vannmelon",     tittel: "Vannmelon til flokken!",
+      msg: "En halv vannmelon er servert. Hele flokken står i ring rundt den." },
+    { at: 15, emo: "🛁", nm: "støvbad",       tittel: "Nytt støvbad!",
+      msg: "Et ordentlig støvbad. Frida har lagt seg i det og nekter å flytte seg." },
+    { at: 20, emo: "🌽", nm: "maiskolbe",     tittel: "Maiskolbe på pinne!",
+      msg: "Den henger ikke lenge. Pip har allerede regnet ut hvor den lander." },
+    { at: 25, emo: "⚽", nm: "ball",          tittel: "En ball å dytte på!",
+      msg: "Dotte er begeistret. Rut er dypt mistenksom. Ballen ruller videre." },
+    { at: 30, emo: "🌻", nm: "solsikke",      tittel: "Solsikke plantet!",
+      msg: "Både pynt og mat. Solveig vokter den som om den var hennes egen." },
+    { at: 35, emo: "🪵", nm: "vagle",         tittel: "Ny vagle satt opp!",
+      msg: "Klara tok den beste plassen før de andre rakk å blunke." },
+    { at: 40, emo: "🍓", nm: "jordbær",       tittel: "Jordbær til alle!",
+      msg: "Det ble ett hver. Gullrun mener bestemt at hun har krav på to." },
+    { at: 45, emo: "🪞", nm: "speil",         tittel: "Speil på veggen!",
+      msg: "Mathilde har stått foran det i tjue minutter og er fortsatt imponert." },
+    { at: 50, emo: "🌾", nm: "halmballe",     tittel: "Halmballe levert!",
+      msg: "En hel ball å rote i. Ingenting i verden er bedre enn å rote." },
+    { at: 55, emo: "☂️", nm: "parasoll",      tittel: "Skygge på varme dager!",
+      msg: "Petra la beslag på den umiddelbart. Harald later som han ikke bryr seg." },
+    { at: 60, emo: "🌳", nm: "skyggetre",     tittel: "Et helt tre!",
+      msg: "Gjennomgangen er ferdig, og flokken har alt de kan ønske seg. Godt jobbet." }
+  ];
+
   var CHEERS = [
     "Godt jobbet! Tre timer nærmere mål.",
     "Én mindre på lista. Høna nikker anerkjennende.",
@@ -494,7 +570,11 @@
   var CONFETTI = ["🌾", "✨", "🥚", "🐣", "🌻", "🪶"];
   var CHECK = '<svg viewBox="0 0 16 16" fill="none"><path d="M2.5 8.5l4 4 7-9" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-  var REVIEW_N = Math.max(0, Math.min(20, CONFIG.GJENNOMGANG_ANTALL | 0));
+  var REVIEW_N = Math.max(0, Math.min(60, CONFIG.GJENNOMGANG_ANTALL | 0));
+  var LAST_ID = 120;                                    // 1–60 hovedoppgaver, 61–120 gjennomgang
+  var STEG = (CONFIG.GJENNOMGANG_STEG && CONFIG.GJENNOMGANG_STEG.length === 2)
+    ? CONFIG.GJENNOMGANG_STEG : ["Gjennomgått", "Godkjent"];
+  var FELT = ["done", "done2"];                          // kolonnene de to avkryssingene ligger i
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -506,8 +586,12 @@
 
   function blankTasks() {
     var t = {};
-    for (var i = 1; i <= TOTAL; i++) t[i] = { id: i, phase: "hoved", label: "Nummer " + i, done: false };
-    for (var j = 61; j <= 80; j++) t[j] = { id: j, phase: "gjennomgang", label: "Gjennomgang " + (j - 60), done: false };
+    for (var i = 1; i <= TOTAL; i++) {
+      t[i] = { id: i, phase: "hoved", label: "Nummer " + i, done: false, done2: false };
+    }
+    for (var j = 61; j <= LAST_ID; j++) {
+      t[j] = { id: j, phase: "gjennomgang", label: "Gjennomgang " + (j - 60), done: false, done2: false };
+    }
     return t;
   }
 
@@ -525,6 +609,7 @@
       Object.keys(tasks).forEach(function (k) {
         if (d[k]) {
           tasks[k].done = !!d[k].done;
+          tasks[k].done2 = !!d[k].done2;
           if (typeof d[k].label === "string" && d[k].label.trim()) tasks[k].label = d[k].label;
         }
       });
@@ -537,20 +622,24 @@
   }
 
   async function fetchAll() {
-    var res = await client.from("gg_tasks").select("id, phase, label, done").order("id");
+    var res = await client.from("gg_tasks").select("id, phase, label, done, done2").order("id");
     if (res.error) throw res.error;
     if (!res.data || !res.data.length) throw new Error("Tabellen gg_tasks er tom – kjør supabase.sql på nytt.");
     var t = blankTasks();
     res.data.forEach(function (r) {
-      t[r.id] = { id: r.id, phase: r.phase || "hoved", label: r.label || ("Nummer " + r.id), done: !!r.done };
+      t[r.id] = {
+        id: r.id, phase: r.phase || "hoved", label: r.label || ("Nummer " + r.id),
+        done: !!r.done, done2: !!r.done2
+      };
     });
     tasks = t;
   }
 
-  async function pushDone(id, done) {
-    var res = await client.from("gg_tasks")
-      .update({ done: done, done_at: done ? new Date().toISOString() : null })
-      .eq("id", id);
+  async function pushDone(id, felt, verdi) {
+    var patch = {};
+    patch[felt] = verdi;
+    patch[felt === "done2" ? "done2_at" : "done_at"] = verdi ? new Date().toISOString() : null;
+    var res = await client.from("gg_tasks").update(patch).eq("id", id);
     if (res.error) throw res.error;
   }
 
@@ -588,13 +677,26 @@
 
   function buildCard(id, target) {
     var el = document.createElement("div");
-    el.className = "task";
     var isReview = id > 60;
-    el.innerHTML =
-      '<div class="top"><span class="num">' + (isReview ? "G" + (id - 60) : "#" + id) + '</span>' +
-      '<span class="box">' + CHECK + '</span></div>' +
-      '<div class="label" contenteditable="true" spellcheck="false"></div>' +
-      '<div class="hrs">' + HPT + ' timer</div>';
+    el.className = isReview ? "task two" : "task";
+
+    if (isReview) {
+      el.innerHTML =
+        '<div class="top"><span class="num">G' + (id - 60) + '</span></div>' +
+        '<div class="label" contenteditable="true" spellcheck="false"></div>' +
+        '<div class="steps">' +
+          '<button class="step" type="button" data-felt="done"><span class="box">' + CHECK + '</span>' +
+            '<span>' + escapeHtml(STEG[0]) + '</span></button>' +
+          '<button class="step" type="button" data-felt="done2"><span class="box">' + CHECK + '</span>' +
+            '<span>' + escapeHtml(STEG[1]) + '</span></button>' +
+        '</div>';
+    } else {
+      el.innerHTML =
+        '<div class="top"><span class="num">#' + id + '</span>' +
+        '<span class="box">' + CHECK + '</span></div>' +
+        '<div class="label" contenteditable="true" spellcheck="false"></div>' +
+        '<div class="hrs">' + HPT + ' timer</div>';
+    }
 
     var label = el.querySelector(".label");
     label.textContent = tasks[id].label;
@@ -613,7 +715,17 @@
       else saveLocal();
     });
 
-    el.addEventListener("click", function () { toggle(id, el); });
+    if (isReview) {
+      Array.prototype.forEach.call(el.querySelectorAll(".step"), function (btn) {
+        btn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          toggle(id, el, btn.getAttribute("data-felt"));
+        });
+      });
+    } else {
+      el.addEventListener("click", function () { toggle(id, el, "done"); });
+    }
+
     target.appendChild(el);
     nodes[id] = el;
   }
@@ -656,12 +768,14 @@
 
   var pending = {};
 
-  async function toggle(id, el) {
-    if (pending[id]) return;
+  async function toggle(id, el, felt) {
+    var noekkel = id + ":" + felt;
+    if (pending[noekkel]) return;
     var before = doneCount();
-    var next = !tasks[id].done;
+    var beforeR = reviewDone();
+    var next = !tasks[id][felt];
 
-    tasks[id].done = next;
+    tasks[id][felt] = next;
     // Settes før render, slik at en eventuell opplåsingsmelding får siste ord
     setCheer(next ? CHEERS[Math.floor(Math.random() * CHEERS.length)] : "Krysset av igjen — det skjer.");
     render();
@@ -669,20 +783,21 @@
     if (next) {
       burst(el);
       if (id <= TOTAL) checkMilestone(before, doneCount());
+      else checkGodbit(beforeR, reviewDone());
     }
 
     if (live) {
-      pending[id] = true;
+      pending[noekkel] = true;
       el.classList.add("busy");
       try {
-        await pushDone(id, next);
+        await pushDone(id, felt, next);
         setStatus(true, "Tilkoblet — alle ser det samme.");
       } catch (e) {
-        tasks[id].done = !next;
+        tasks[id][felt] = !next;
         render();
         setStatus(false, "Fikk ikke lagret. Sjekk nettforbindelsen og prøv igjen.");
       } finally {
-        pending[id] = false;
+        pending[noekkel] = false;
         el.classList.remove("busy");
       }
     } else {
@@ -706,9 +821,21 @@
     return n;
   }
 
+  // Antall gjennomgangsoppgaver der BEGGE avkryssingene er satt
   function reviewDone() {
     var n = 0;
-    for (var j = 61; j <= 60 + REVIEW_N; j++) if (tasks[j] && tasks[j].done) n++;
+    for (var j = 61; j <= 60 + REVIEW_N; j++) if (tasks[j] && tasks[j].done && tasks[j].done2) n++;
+    return n;
+  }
+
+  // Antall enkeltavkryssinger, av REVIEW_N * 2
+  function reviewSteps() {
+    var n = 0;
+    for (var j = 61; j <= 60 + REVIEW_N; j++) {
+      if (!tasks[j]) continue;
+      if (tasks[j].done) n++;
+      if (tasks[j].done2) n++;
+    }
     return n;
   }
 
@@ -752,10 +879,18 @@
     var n = doneCount();
     var pct = Math.round((n / TOTAL) * 100);
 
-    for (var i = 1; i <= 80; i++) {
-      if (nodes[i]) nodes[i].classList.toggle("done", !!(tasks[i] && tasks[i].done));
+    for (var i = 1; i <= LAST_ID; i++) {
+      if (!nodes[i] || !tasks[i]) continue;
+      if (i > 60) {
+        nodes[i].classList.toggle("done", tasks[i].done && tasks[i].done2);
+        Array.prototype.forEach.call(nodes[i].querySelectorAll(".step"), function (btn) {
+          btn.classList.toggle("on", !!tasks[i][btn.getAttribute("data-felt")]);
+        });
+      } else {
+        nodes[i].classList.toggle("done", !!tasks[i].done);
+      }
     }
-    for (var i2 = 1; i2 <= 80; i2++) {
+    for (var i2 = 1; i2 <= LAST_ID; i2++) {
       if (nodes[i2]) {
         var lab = nodes[i2].querySelector(".label");
         if (lab && document.activeElement !== lab && lab.textContent !== tasks[i2].label) lab.textContent = tasks[i2].label;
@@ -776,17 +911,61 @@
 
     for (var j = 0; j < FLOKKEN.length; j++) pens[j].classList.toggle("on", n >= FLOKKEN[j].at);
 
-    var yard = $("yard");
     var have = FLOKKEN.filter(function (a) { return n >= a.at; });
-    if (!have.length) yard.innerHTML = '<span class="empty">Hønsegården er tom. Første kylling klekkes på oppgave 5. 🥚</span>';
-    else yard.innerHTML = have.map(function (a, k) {
-      return '<span class="hen" style="animation-delay:' + (k * .23).toFixed(2) + 's" title="' + a.nm + '">' + a.emo + '</span>';
-    }).join("");
+    var gaver = GODBITER.filter(function (g) { return reviewDone() >= g.at; });
+    tegnGaard(have, gaver);
 
     var lockTxt = renderLock(n);
 
     var pace = paceText(n);
-    renderTv(n, pct, days, pace, have, lockTxt);
+    renderTv(n, pct, days, pace, have.concat(gaver), lockTxt);
+  }
+
+  /* --------- Gårdsplassen --------- */
+
+  var HIMMEL = '<span class="sun"></span><span class="cloud a"></span>' +
+               '<span class="cloud b"></span><span class="cloud c"></span>';
+
+  function tegnGaard(have, gaver) {
+    var yard = $("yard");
+
+    if (!have.length) {
+      yard.innerHTML = HIMMEL +
+        '<span class="empty">Gårdsplassen er tom. Første kylling klekkes på oppgave 5. 🥚</span>';
+    } else {
+      // Kyllinger og godbiter blandes, så tingene står midt blant flokken
+      var deler = [];
+      var maks = Math.max(have.length, gaver.length);
+      for (var k = 0; k < maks; k++) {
+        if (have[k]) deler.push('<span class="hen" style="animation-delay:' + (k * .23).toFixed(2) +
+          's" title="' + have[k].nm + '">' + have[k].emo + '</span>');
+        if (gaver[k]) deler.push('<span class="toy" style="animation-delay:' + (k * .31).toFixed(2) +
+          's" title="' + gaver[k].nm + '">' + gaver[k].emo + '</span>');
+      }
+      yard.innerHTML = HIMMEL + deler.join("");
+    }
+
+    // Linja under gårdsplassen
+    var info = $("yardInfo");
+    if (!REVIEW_N) { info.textContent = ""; return; }
+
+    var rn = reviewDone();
+    var neste = null;
+    for (var j = 0; j < GODBITER.length; j++) if (GODBITER[j].at > rn) { neste = GODBITER[j]; break; }
+
+    if (!neste) {
+      info.innerHTML = "Flokken har fått <b>alle " + GODBITER.length + " godbitene</b>. Gården er komplett. 🌳";
+    } else {
+      info.innerHTML = "Flokken har fått <b>" + gaver.length + " av " + GODBITER.length + " godbiter</b>. " +
+        "Neste (" + neste.nm + " " + neste.emo + ") kommer etter <b>" + (neste.at - rn) +
+        (neste.at - rn === 1 ? " oppgave" : " oppgaver") + "</b> til i gjennomgangen.";
+    }
+  }
+
+  function checkGodbit(before, after) {
+    for (var k = 0; k < GODBITER.length; k++) {
+      if (GODBITER[k].at > before && GODBITER[k].at <= after) { celebrate(GODBITER[k]); return; }
+    }
   }
 
   /* --------- Det låste hønsehuset --------- */
@@ -810,23 +989,26 @@
       $("reviewOpen").hidden = true;
       $("reviewSub").textContent = "låst";
       $("lockTitle").textContent = "Låst 🔒";
-      $("lockTxt").textContent = "Hønsehuset åpner seg når alle " + UNLOCK_AT + " oppgavene er krysset av. " +
-        igjen + (igjen === 1 ? " oppgave igjen." : " oppgaver igjen.");
+      $("lockTxt").textContent = "Hønsehuset åpner seg når " +
+        (UNLOCK_AT >= TOTAL ? "alle " + TOTAL + " oppgavene" : UNLOCK_AT + " av de " + TOTAL + " oppgavene") +
+        " er krysset av. " + igjen + (igjen === 1 ? " oppgave igjen." : " oppgaver igjen.");
       tv = "🔒 Hønsehuset åpnes om " + igjen + (igjen === 1 ? " oppgave" : " oppgaver");
     } else if (REVIEW_N === 0) {
       $("reviewOpen").hidden = true;
       $("reviewSub").textContent = "åpnet, men tom";
       $("lockTitle").textContent = "Hønsehuset er åpnet! 🎉";
-      $("lockTxt").textContent = "Alle " + UNLOCK_AT + " er i havn. Gjennomgangsoppgavene legges inn her " +
+      $("lockTxt").textContent = UNLOCK_AT + " oppgaver er i havn. Gjennomgangsoppgavene legges inn her " +
         "så snart dere vet hva de skal være.";
       tv = "🪺 Hønsehuset er åpnet";
     } else {
       var rn = reviewDone();
+      var rs = reviewSteps();
       $("reviewOpen").hidden = false;
-      $("reviewBar").style.width = Math.round((rn / REVIEW_N) * 100) + "%";
-      $("reviewSub").textContent = rn + " av " + REVIEW_N;
+      $("reviewBar").style.width = Math.round((rs / (REVIEW_N * 2)) * 100) + "%";
+      $("reviewSub").textContent = rn + " av " + REVIEW_N + " helt ferdige";
       $("lockTitle").textContent = "Hønsehuset er åpnet! 🎉";
-      $("lockTxt").textContent = rn + " av " + REVIEW_N + " gjennomgangsoppgaver er gjort.";
+      $("lockTxt").textContent = rn + " av " + REVIEW_N + " gjennomgangsoppgaver er helt ferdige (" +
+        rs + " av " + (REVIEW_N * 2) + " avkryssinger).";
       tv = "🪺 Gjennomgangen: " + rn + " av " + REVIEW_N;
     }
 
@@ -863,7 +1045,7 @@
 
   function celebrate(a) {
     $("mEmo").textContent = a.emo;
-    $("mTitle").textContent = a.at === TOTAL ? "Hele lista er gjort!" : a.nm + " er klekket!";
+    $("mTitle").textContent = a.tittel || (a.at === TOTAL ? "Hele lista er gjort!" : a.nm + " er klekket!");
     $("mText").textContent = a.msg;
     veil.classList.add("show");
     rain(a.at === TOTAL ? 70 : 28);
@@ -907,7 +1089,9 @@
   var filterOpen = false;
   function applyFilter() {
     Object.keys(nodes).forEach(function (id) {
-      nodes[id].style.display = (filterOpen && tasks[id] && tasks[id].done) ? "none" : "";
+      var t = tasks[id];
+      var ferdig = t && (id > 60 ? (t.done && t.done2) : t.done);
+      nodes[id].style.display = (filterOpen && ferdig) ? "none" : "";
     });
   }
   $("showAll").addEventListener("click", function () { filterOpen = false; applyFilter(); });
@@ -934,11 +1118,15 @@
   async function refresh(showCelebration) {
     if (!live) return;
     var before = doneCount();
+    var beforeR = reviewDone();
     try {
       await fetchAll();
       render();
       setStatus(true, "Tilkoblet — alle ser det samme.");
-      if (showCelebration) checkMilestone(before, doneCount());
+      if (showCelebration) {
+        checkMilestone(before, doneCount());
+        checkGodbit(beforeR, reviewDone());
+      }
     } catch (e) {
       setStatus(false, "Mistet kontakten med databasen. Prøver igjen.");
     }
@@ -1057,10 +1245,13 @@
           var r = p["new"];
           if (!r || !tasks[r.id]) return;
           var before = doneCount();
+          var beforeR = reviewDone();
           tasks[r.id].done = !!r.done;
+          tasks[r.id].done2 = !!r.done2;
           if (typeof r.label === "string" && r.label) tasks[r.id].label = r.label;
           render();
-          if (r.id <= TOTAL && r.done) checkMilestone(before, doneCount());
+          if (r.id <= TOTAL) checkMilestone(before, doneCount());
+          else checkGodbit(beforeR, reviewDone());
         })
         .subscribe();
     } catch (e) {}
