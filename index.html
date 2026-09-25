@@ -520,7 +520,6 @@
 
     START_DATO:   '2026-09-22',   // dagen dere begynte (brukes til «i rute / bak skjema»)
     FRIST_DATO:   '2026-10-15',   // fristen – gjelder BÅDE hovedlista og gjennomgangen
-    ANTALL_ANSATTE: 6,            // brukes bare til å vise timer per person. Sett til 0 for å skjule.
     TIMER_PER_OPPGAVE: 3,
     // Gjennomgangsoppgavene: 1 time per avkryssing, altså 2 timer per oppgave
     TIMER_PER_GJENNOMGANG_AVKRYSSING: 1,
@@ -898,10 +897,9 @@
     return Math.ceil((d - new Date()) / 86400000);
   }
 
-  // Fristen gjelder alt arbeidet, både hovedlista og gjennomgangen.
-  // Derfor regnes tempoet i TIMER, ikke i oppgaver – de to fasene er ulikt store.
-  function nor(x) { return x.toFixed(1).replace(".", ","); }
-
+  // Hvor mange dager foran eller bak skjema dere ligger.
+  // Regnes på alt arbeidet: hvor langt i planen framgangen tilsvarer, mot hvor langt vi
+  // faktisk er kommet i kalenderen.
   function paceText(T) {
     var igjen = T.totalt - T.gjort;
     var days = dagerTil(CONFIG.FRIST_DATO);
@@ -915,28 +913,31 @@
     }
     if (days === null) { el.textContent = ""; return ""; }
     if (days <= 0) {
-      el.textContent = igjen + " timer gjenstår etter fristen.";
+      el.textContent = "Fristen er passert.";
       el.classList.add("behind");
-      return igjen + " t igjen etter fristen";
+      return "Fristen er passert";
     }
-
-    var perDag = igjen / days;
-    var ansatte = CONFIG.ANTALL_ANSATTE | 0;
 
     var start = new Date(CONFIG.START_DATO + "T00:00:00");
     var end = new Date(CONFIG.FRIST_DATO + "T23:59:59");
-    var total = (end - start) / 86400000;
-    var gone = (new Date() - start) / 86400000;
-    var forventet = total > 0 ? T.totalt * Math.max(0, Math.min(1, gone / total)) : 0;
-    var diff = Math.round(T.gjort - forventet);
+    var totalDager = (end - start) / 86400000;
+    if (!(totalDager > 0)) { el.textContent = ""; return ""; }
 
-    var txt = "Fristen gjelder alt: " + nor(perDag) + " timer om dagen";
-    if (ansatte > 0) txt += " (≈ " + nor(perDag / ansatte) + " t per ansatt)";
-    txt += " for å rekke fristen. ";
+    var gaatt = (new Date() - start) / 86400000;
+    var planDag = (T.gjort / T.totalt) * totalDager;
+    var diff = Math.round(planDag - gaatt);
 
-    if (diff >= 6) { txt += "Dere ligger " + diff + " timer foran skjema."; el.classList.add("ahead"); }
-    else if (diff <= -6) { txt += "Dere ligger " + Math.abs(diff) + " timer bak skjema."; el.classList.add("behind"); }
-    else { txt += "Dere er i rute."; el.classList.add("ahead"); }
+    var txt;
+    if (diff >= 1) {
+      txt = "Dere ligger " + diff + (diff === 1 ? " dag" : " dager") + " foran skjema.";
+      el.classList.add("ahead");
+    } else if (diff <= -1) {
+      txt = "Dere ligger " + Math.abs(diff) + (diff === -1 ? " dag" : " dager") + " bak skjema.";
+      el.classList.add("behind");
+    } else {
+      txt = "Dere er i rute.";
+      el.classList.add("ahead");
+    }
 
     el.textContent = txt;
     return txt;
