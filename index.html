@@ -116,6 +116,8 @@
   .bar i { display: block; height: 100%; width: 0; border-radius: 999px;
            background: linear-gradient(90deg, var(--accent), var(--green));
            transition: width .6s cubic-bezier(.34,1.3,.64,1); }
+  .split { margin: 9px 0 0; font-size: .82rem; color: var(--muted); }
+  .split b { color: var(--ink); font-weight: 600; }
   .lines { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
   .cheer { margin: 0; font-size: .95rem; color: var(--green); font-weight: 600; flex: 1 1 240px; min-height: 1.5em; }
   .pace { margin: 0; font-size: .88rem; color: var(--muted); }
@@ -375,16 +377,18 @@
           <circle class="track" cx="66" cy="66" r="56" fill="none" stroke-width="13"/>
           <circle class="fill" id="ringFill" cx="66" cy="66" r="56" fill="none" stroke-width="13" stroke-dasharray="0 999"/>
         </svg>
-        <div class="pct"><b id="pctNum">0%</b><span>ferdig</span></div>
+        <div class="pct"><b id="pctNum">0%</b><span>av alt</span></div>
       </div>
       <div class="stats">
-        <div class="stat"><b id="sDone">0 / 60</b><span id="sDoneLbl">oppgaver gjort</span></div>
-        <div class="stat"><b id="sHours">0 t</b><span id="sHoursLbl">av 180 timer</span></div>
-        <div class="stat"><b id="sLeft">60</b><span id="sLeftLbl">igjen på lista</span></div>
+        <div class="stat"><b id="sDone">0 / 60</b><span id="sDoneLbl">hovedoppgaver gjort</span></div>
+        <div class="stat" id="sReviewStat"><b id="sReview">–</b><span id="sReviewLbl">gjennomgang ferdig</span></div>
+        <div class="stat"><b id="sHours">0 t</b><span id="sHoursLbl">av 300 timer</span></div>
+        <div class="stat"><b id="sLeft">120</b><span id="sLeftLbl">oppgaver igjen</span></div>
         <div class="stat"><b id="sDays">–</b><span id="sDaysLbl">dager til frist</span></div>
       </div>
     </div>
     <div class="bar"><i id="bar"></i></div>
+    <p class="split" id="sSplit"></p>
     <div class="lines">
       <p class="cheer" id="cheer">Første egg venter på å klekkes. Kryss av en oppgave for å starte!</p>
       <p class="pace" id="pace"></p>
@@ -476,10 +480,10 @@
   <div class="tvBig"><span id="tvDone">0</span><small> / 60</small></div>
   <div class="tvBar"><i id="tvBar"></i></div>
   <div class="tvRow">
-    <div><b id="tvHours">0 t</b>av 180 timer</div>
-    <div><b id="tvLeft">60</b>igjen</div>
+    <div><b id="tvHours">0 t</b><span id="tvHoursLbl">av 300 timer</span></div>
+    <div><b id="tvLeft">120</b>oppgaver igjen</div>
     <div><b id="tvDays">–</b>dager til frist</div>
-    <div><b id="tvPct">0 %</b>ferdig</div>
+    <div><b id="tvPct">0 %</b>ferdig totalt</div>
   </div>
   <div class="yard" id="tvYard"></div>
   <div class="tvRow"><div id="tvGodbit"></div></div>
@@ -499,8 +503,11 @@
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxydHF1ZWRxamRnYnhnemRybndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNzE5MjEsImV4cCI6MjEwNTY0NzkyMX0.RsFGvDYvS7HMM2-eV6Tyak_8It5QmRDLkr3Hbf5qBYo',
 
     START_DATO:   '2026-09-22',   // dagen dere begynte (brukes til «i rute / bak skjema»)
-    FRIST_DATO:   '2026-10-15',   // fristen
+    FRIST_DATO:   '2026-10-15',   // fristen – gjelder BÅDE hovedlista og gjennomgangen
+    ANTALL_ANSATTE: 6,            // brukes bare til å vise timer per person. Sett til 0 for å skjule.
     TIMER_PER_OPPGAVE: 3,
+    // Gjennomgangsoppgavene: 1 time per avkryssing, altså 2 timer per oppgave
+    TIMER_PER_GJENNOMGANG_AVKRYSSING: 1,
 
     // Gjennomgangsfasen: antall oppgaver. 0 = hønsehuset står tomt (men fortsatt synlig). Maks 60.
     GJENNOMGANG_ANTALL: 60,
@@ -519,6 +526,7 @@
 
   var TOTAL = 60;
   var HPT = CONFIG.TIMER_PER_OPPGAVE;
+  var HPG = CONFIG.TIMER_PER_GJENNOMGANG_AVKRYSSING;   // timer per avkryssing i gjennomgangen
   var LOCAL_KEY = "gaardsgjengen.demo.v2";
 
   var FLOKKEN = [
@@ -853,41 +861,72 @@
 
   var RING = 2 * Math.PI * 56;
 
+  // Alle tallene panelet bygger på. Hovedlista: 3 t per oppgave.
+  // Gjennomgangen: 1 t per avkryssing, altså 2 t per oppgave.
+  function timerTall() {
+    var n = doneCount();
+    var rs = reviewSteps();
+    var hoved = n * HPT;
+    var gj = rs * HPG;
+    var totalt = TOTAL * HPT + REVIEW_N * HPG * 2;
+    return {
+      n: n, rs: rs, hoved: hoved, gj: gj, gjort: hoved + gj, totalt: totalt,
+      pct: totalt ? Math.round(((hoved + gj) / totalt) * 100) : 0
+    };
+  }
+
   function dagerTil(iso) {
     var d = new Date(iso + "T23:59:59");
     if (isNaN(d)) return null;
     return Math.ceil((d - new Date()) / 86400000);
   }
 
-  function paceText(n) {
-    var left = TOTAL - n;
+  // Fristen gjelder alt arbeidet, både hovedlista og gjennomgangen.
+  // Derfor regnes tempoet i TIMER, ikke i oppgaver – de to fasene er ulikt store.
+  function nor(x) { return x.toFixed(1).replace(".", ","); }
+
+  function paceText(T) {
+    var igjen = T.totalt - T.gjort;
     var days = dagerTil(CONFIG.FRIST_DATO);
     var el = $("pace");
     el.className = "pace";
 
-    if (left === 0) { el.textContent = "Alt er gjort. Fristen kan få slappe av."; el.classList.add("ahead"); return "Alt er gjort!"; }
+    if (igjen <= 0) {
+      el.textContent = "Alt er ferdig, både hovedlista og gjennomgangen. Fristen kan få slappe av.";
+      el.classList.add("ahead");
+      return "Alt er ferdig!";
+    }
     if (days === null) { el.textContent = ""; return ""; }
-    if (days <= 0) { el.textContent = left + " oppgaver gjenstår etter fristen."; el.classList.add("behind"); return left + " igjen etter fristen"; }
+    if (days <= 0) {
+      el.textContent = igjen + " timer gjenstår etter fristen.";
+      el.classList.add("behind");
+      return igjen + " t igjen etter fristen";
+    }
 
-    var perDay = left / days;
+    var perDag = igjen / days;
+    var ansatte = CONFIG.ANTALL_ANSATTE | 0;
+
     var start = new Date(CONFIG.START_DATO + "T00:00:00");
     var end = new Date(CONFIG.FRIST_DATO + "T23:59:59");
     var total = (end - start) / 86400000;
     var gone = (new Date() - start) / 86400000;
-    var forventet = total > 0 ? Math.round(TOTAL * Math.max(0, Math.min(1, gone / total))) : 0;
-    var diff = n - forventet;
+    var forventet = total > 0 ? T.totalt * Math.max(0, Math.min(1, gone / total)) : 0;
+    var diff = Math.round(T.gjort - forventet);
 
-    var txt = "Må gjøre " + perDay.toFixed(1).replace(".", ",") + " oppgaver om dagen for å rekke fristen. ";
-    if (diff >= 3) { txt += "Dere ligger " + diff + " foran skjema."; el.classList.add("ahead"); }
-    else if (diff <= -3) { txt += "Dere ligger " + Math.abs(diff) + " bak skjema."; el.classList.add("behind"); }
+    var txt = "Fristen gjelder alt: " + nor(perDag) + " timer om dagen";
+    if (ansatte > 0) txt += " (≈ " + nor(perDag / ansatte) + " t per ansatt)";
+    txt += " for å rekke fristen. ";
+
+    if (diff >= 6) { txt += "Dere ligger " + diff + " timer foran skjema."; el.classList.add("ahead"); }
+    else if (diff <= -6) { txt += "Dere ligger " + Math.abs(diff) + " timer bak skjema."; el.classList.add("behind"); }
     else { txt += "Dere er i rute."; el.classList.add("ahead"); }
+
     el.textContent = txt;
     return txt;
   }
 
   function render() {
     var n = doneCount();
-    var pct = Math.round((n / TOTAL) * 100);
 
     for (var i = 1; i <= LAST_ID; i++) {
       if (!nodes[i] || !tasks[i]) continue;
@@ -907,13 +946,34 @@
       }
     }
 
-    $("ringFill").setAttribute("stroke-dasharray", (RING * n / TOTAL) + " " + RING);
-    $("pctNum").textContent = pct + "%";
-    $("bar").style.width = pct + "%";
+    var T = timerTall();
+
+    $("ringFill").setAttribute("stroke-dasharray", (RING * T.gjort / T.totalt) + " " + RING);
+    $("pctNum").textContent = T.pct + "%";
+    $("bar").style.width = T.pct + "%";
     $("sDone").textContent = n + " / " + TOTAL;
-    $("sHours").textContent = (n * HPT) + " t";
-    $("sHoursLbl").textContent = "av " + (TOTAL * HPT) + " timer";
-    $("sLeft").textContent = String(TOTAL - n);
+    $("sHours").textContent = T.gjort + " t";
+    $("sHoursLbl").textContent = "av " + T.totalt + " timer";
+
+    if (REVIEW_N > 0) {
+      $("sReviewStat").hidden = false;
+      if (n < UNLOCK_AT) {
+        $("sReview").textContent = "🔒";
+        $("sReviewLbl").textContent = "gjennomgangen er låst";
+      } else {
+        $("sReview").textContent = reviewDone() + " / " + REVIEW_N;
+        $("sReviewLbl").textContent = "gjennomgang ferdig";
+      }
+      $("sLeft").textContent = String((TOTAL - n) + (REVIEW_N - reviewDone()));
+      $("sLeftLbl").textContent = "oppgaver igjen totalt";
+      $("sSplit").innerHTML = "<b>" + T.hoved + " t</b> på hovedlista (" + (TOTAL * HPT) +
+        " t totalt) · <b>" + T.gj + " t</b> på gjennomgangen (" + (REVIEW_N * HPG * 2) + " t totalt)";
+    } else {
+      $("sReviewStat").hidden = true;
+      $("sLeft").textContent = String(TOTAL - n);
+      $("sLeftLbl").textContent = "oppgaver igjen";
+      $("sSplit").textContent = "";
+    }
 
     var days = dagerTil(CONFIG.FRIST_DATO);
     $("sDays").textContent = days === null ? "–" : (days > 0 ? days : 0);
@@ -927,8 +987,8 @@
 
     var lockTxt = renderLock(n);
 
-    var pace = paceText(n);
-    renderTv(n, pct, days, pace, lockTxt);
+    var pace = paceText(T);
+    renderTv(n, T, days, pace, lockTxt);
   }
 
   /* --------- Gårdsplassen --------- */
@@ -1038,14 +1098,15 @@
     return tv;
   }
 
-  function renderTv(n, pct, days, pace, lockTxt) {
+  function renderTv(n, T, days, pace, lockTxt) {
     $("tvLock").textContent = lockTxt || "";
     $("tvDone").textContent = n;
-    $("tvBar").style.width = pct + "%";
-    $("tvHours").textContent = (n * HPT) + " t";
-    $("tvLeft").textContent = TOTAL - n;
+    $("tvBar").style.width = T.pct + "%";
+    $("tvHours").textContent = T.gjort + " t";
+    $("tvHoursLbl").textContent = "av " + T.totalt + " timer";
+    $("tvLeft").textContent = REVIEW_N > 0 ? (TOTAL - n) + (REVIEW_N - reviewDone()) : (TOTAL - n);
     $("tvDays").textContent = days === null ? "–" : (days > 0 ? days : 0);
-    $("tvPct").textContent = pct + " %";
+    $("tvPct").textContent = T.pct + " %";
     $("tvPace").textContent = pace;
   }
 
