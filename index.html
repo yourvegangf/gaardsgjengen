@@ -846,7 +846,32 @@
     }
   }
 
-  function setCheer(txt) { $("cheer").textContent = txt; }
+  // Så lenge ingen har krysset av i denne økta, viser meldingslinja status i stedet
+  // for den faste velkomstteksten. Første avkryssing tar over linja.
+  var cheerRort = false;
+
+  function setCheer(txt) { cheerRort = true; $("cheer").textContent = txt; }
+
+  function startHilsen() {
+    var n = doneCount();
+    var rs = reviewSteps();
+    var rd = reviewDone();
+    var honer = FLOKKEN.filter(function (a) { return n >= a.at; }).length;
+
+    if (n === 0 && rs === 0) return "Første egg venter på å klekkes. Kryss av en oppgave for å starte!";
+    if (n >= TOTAL && (REVIEW_N === 0 || rd >= REVIEW_N)) return "Alt er gjort. Hele hønsegården jubler!";
+
+    var txt = "Velkommen tilbake! " + n + " av " + TOTAL + " hovedoppgaver er gjort";
+    if (honer > 0) txt += ", og " + honer + (honer === 1 ? " høne går" : " høner går") + " ute på plassen.";
+    else txt += ". Første kylling klekkes på oppgave " + FLOKKEN[0].at + ".";
+
+    if (REVIEW_N > 0 && n >= UNLOCK_AT) {
+      if (rd > 0) txt += " Gjennomgangen: " + rd + " av " + REVIEW_N + " ferdige.";
+      else if (rs > 0) txt += " Gjennomgangen er i gang.";
+      else txt += " Hønsehuset står åpent og venter på gjennomgangen.";
+    }
+    return txt;
+  }
 
   function doneCount() {
     var n = 0;
@@ -1011,6 +1036,8 @@
 
     var pace = paceText(T);
     renderTv(n, T, days, pace, lockTxt);
+
+    if (!cheerRort) $("cheer").textContent = startHilsen();
   }
 
   /* --------- Gårdsplassen --------- */
