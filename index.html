@@ -256,6 +256,8 @@
   .tv .yard .cloud { height: 1.6vh; } .tv .yard .cloud.a { width: 6vw; } .tv .yard .cloud.b { width: 4vw; } .tv .yard .cloud.c { width: 5vw; }
   .tv .yard .empty { font-size: 2vh; padding-bottom: 3vh; }
   .tv #tvGodbit { font-size: 1.8vw; }
+  /* Godbitlinja er en hel setning – <b> må ikke bli blokk slik som i tallboksene over */
+  .tv #tvGodbit b { display: inline; font-size: inherit; color: var(--ink); }
   .tv .exit { position: fixed; top: 16px; right: 16px; }
   @media (max-width: 700px) {
     .tv .tvTitle { font-size: 5vw; } .tv .tvBig { font-size: 22vw; }
@@ -416,7 +418,7 @@
       </div>
       <div class="stats">
         <div class="stat"><b id="sDone">0 / 60</b><span id="sDoneLbl">hovedoppgaver gjort</span></div>
-        <div class="stat" id="sReviewStat"><b id="sReview">–</b><span id="sReviewLbl">gjennomgang ferdig</span></div>
+        <div class="stat" id="sReviewStat"><b id="sReview">–</b><span id="sReviewLbl">gjennomganger ferdig</span></div>
         <div class="stat"><b id="sHours">0 t</b><span id="sHoursLbl">av 300 timer</span></div>
         <div class="stat"><b id="sLeft">120</b><span id="sLeftLbl">oppgaver igjen</span></div>
         <div class="stat"><b id="sDays">–</b><span id="sDaysLbl">dager til frist</span></div>
@@ -1028,7 +1030,7 @@
         $("sReviewLbl").textContent = "gjennomgangen er låst";
       } else {
         $("sReview").textContent = reviewDone() + " / " + REVIEW_N;
-        $("sReviewLbl").textContent = "gjennomgang ferdig";
+        $("sReviewLbl").textContent = "gjennomganger ferdig";
       }
       $("sLeft").textContent = String((TOTAL - n) + (REVIEW_N - reviewDone()));
       $("sLeftLbl").textContent = "oppgaver igjen totalt";
@@ -1099,9 +1101,10 @@
       } else if (!neste) {
         tekst = "Flokken har fått <b>alle " + GODBITER.length + " godbitene</b>. Gården er komplett. 🌳";
       } else {
+        var mangler = neste.at - rn;
         tekst = "Flokken har fått <b>" + gaver.length + " av " + GODBITER.length + " godbiter</b>. " +
-          "Neste (" + neste.nm + " " + neste.emo + ") kommer etter <b>" + (neste.at - rn) +
-          (neste.at - rn === 1 ? " oppgave" : " oppgaver") + "</b> til i gjennomgangen.";
+          "Neste (" + neste.nm + " " + neste.emo + ") kommer etter <b>" + mangler +
+          (mangler === 1 ? " gjennomgang" : " gjennomganger") + "</b> til.";
       }
     }
     $("yardInfo").innerHTML = tekst;
