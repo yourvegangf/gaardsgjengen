@@ -210,21 +210,30 @@
 
   /* ---------- Skjermvisning ---------- */
   .tv { position: fixed; inset: 0; background: var(--bg); z-index: 70; display: none;
-        flex-direction: column; justify-content: center; align-items: center; gap: 2vh; padding: 3vh 3vw; text-align: center; }
+        flex-direction: column; justify-content: center; align-items: center; gap: 1.6vh;
+        padding: 3vh 3vw; text-align: center; overflow-y: auto; }
   .tv.show { display: flex; }
-  .tv .tvTitle { font-size: 3.2vw; margin: 0; letter-spacing: -.02em; }
-  .tv .tvBig { font-size: 15vw; line-height: .9; font-weight: 700; letter-spacing: -.04em; color: var(--accent); }
+  .tv .tvTitle { font-size: 2.6vw; margin: 0; letter-spacing: -.02em; }
+  .tv .tvBig { font-size: 11vw; line-height: .85; font-weight: 700; letter-spacing: -.04em; color: var(--accent); }
   .tv .tvBig small { font-size: .3em; color: var(--muted); font-weight: 400; letter-spacing: 0; }
   .tv .tvBar { width: 80vw; height: 3vh; border-radius: 999px; background: var(--accent-soft); overflow: hidden; }
   .tv .tvBar i { display: block; height: 100%; width: 0; border-radius: 999px;
                  background: linear-gradient(90deg, var(--accent), var(--green)); transition: width .8s ease; }
   .tv .tvRow { display: flex; gap: 4vw; flex-wrap: wrap; justify-content: center; font-size: 1.6vw; color: var(--muted); }
   .tv .tvRow b { display: block; font-size: 2.2vw; color: var(--ink); }
-  .tv .tvYard { font-size: 4vw; line-height: 1.2; max-width: 86vw; }
+  .tv .yard { width: 86vw; min-height: 21vh; margin: 0; padding: 1.4vh 2vw 2vh; gap: .5vh 1.6vw; }
+  .tv .yard .hen { font-size: 4.6vh; }
+  .tv .yard .toy { font-size: 3.9vh; }
+  .tv .yard .sun { width: 4.2vh; height: 4.2vh; top: 1.6vh; right: 2vw; box-shadow: 0 0 0 1.2vh rgba(255,217,120,.26); }
+  .tv .yard .cloud { height: 1.6vh; } .tv .yard .cloud.a { width: 6vw; } .tv .yard .cloud.b { width: 4vw; } .tv .yard .cloud.c { width: 5vw; }
+  .tv .yard .empty { font-size: 2vh; padding-bottom: 3vh; }
+  .tv #tvGodbit { font-size: 1.8vw; }
   .tv .exit { position: fixed; top: 16px; right: 16px; }
   @media (max-width: 700px) {
-    .tv .tvTitle { font-size: 6vw; } .tv .tvBig { font-size: 26vw; }
-    .tv .tvRow { font-size: 3.4vw; } .tv .tvRow b { font-size: 5vw; } .tv .tvYard { font-size: 8vw; }
+    .tv .tvTitle { font-size: 5vw; } .tv .tvBig { font-size: 22vw; }
+    .tv .tvRow { font-size: 3.4vw; } .tv .tvRow b { font-size: 5vw; }
+    .tv #tvGodbit { font-size: 3.4vw; }
+    .tv .yard { width: 92vw; } .tv .yard .hen { font-size: 3.6vh; } .tv .yard .toy { font-size: 3vh; }
   }
 
   /* ---------- Gjennomgangskort med to avkryssinger ---------- */
@@ -472,7 +481,8 @@
     <div><b id="tvDays">–</b>dager til frist</div>
     <div><b id="tvPct">0 %</b>ferdig</div>
   </div>
-  <div class="tvYard" id="tvYard"></div>
+  <div class="yard" id="tvYard"></div>
+  <div class="tvRow"><div id="tvGodbit"></div></div>
   <div class="tvRow"><div id="tvPace"></div></div>
   <div class="tvRow"><div id="tvLock"></div></div>
 </div>
@@ -530,24 +540,24 @@
   var GODBITER = [
     { at: 5,  emo: "🥬", nm: "salathode",     tittel: "Salathode på snor!",
       msg: "Ei salathode henger og svinger i gården. Bølla gikk til angrep med en gang." },
-    { at: 10, emo: "🍉", nm: "vannmelon",     tittel: "Vannmelon til flokken!",
+    { at: 10, emo: "🛁", nm: "torvbad",       tittel: "Torvbad på plass!",
+      msg: "Et ordentlig torvbad å bade i. Frida har lagt seg i det og nekter å flytte seg." },
+    { at: 15, emo: "🍉", nm: "vannmelon",     tittel: "Vannmelon til flokken!",
       msg: "En halv vannmelon er servert. Hele flokken står i ring rundt den." },
-    { at: 15, emo: "🛁", nm: "støvbad",       tittel: "Nytt støvbad!",
-      msg: "Et ordentlig støvbad. Frida har lagt seg i det og nekter å flytte seg." },
-    { at: 20, emo: "🌽", nm: "maiskolbe",     tittel: "Maiskolbe på pinne!",
+    { at: 20, emo: "🪵", nm: "plattform",     tittel: "Ny plattform satt opp!",
+      msg: "Noe å hoppe opp på og se utover fra. Klara tok toppen før de andre rakk å blunke." },
+    { at: 25, emo: "🌾", nm: "høy",           tittel: "Høy levert!",
+      msg: "En diger dunge med høy å rote i. Ingenting i verden er bedre enn å rote." },
+    { at: 30, emo: "🌽", nm: "maiskolbe",     tittel: "Maiskolbe på pinne!",
       msg: "Den henger ikke lenge. Pip har allerede regnet ut hvor den lander." },
-    { at: 25, emo: "⚽", nm: "ball",          tittel: "En ball å dytte på!",
+    { at: 35, emo: "🟤", nm: "torvballer",    tittel: "Torv- og flisballer!",
+      msg: "Baller å pikke i stykker og spre utover hele gården. Full jobb for flokken i dagevis." },
+    { at: 40, emo: "⚽", nm: "ball",          tittel: "En ball å dytte på!",
       msg: "Dotte er begeistret. Rut er dypt mistenksom. Ballen ruller videre." },
-    { at: 30, emo: "🌻", nm: "solsikke",      tittel: "Solsikke plantet!",
-      msg: "Både pynt og mat. Solveig vokter den som om den var hennes egen." },
-    { at: 35, emo: "🪵", nm: "vagle",         tittel: "Ny vagle satt opp!",
-      msg: "Klara tok den beste plassen før de andre rakk å blunke." },
-    { at: 40, emo: "🍓", nm: "jordbær",       tittel: "Jordbær til alle!",
+    { at: 45, emo: "🌻", nm: "solsikke",      tittel: "Solsikke plantet!",
+      msg: "Både pynt, skygge og mat. Solveig vokter den som om den var hennes egen." },
+    { at: 50, emo: "🍓", nm: "jordbær",       tittel: "Jordbær til alle!",
       msg: "Det ble ett hver. Gullrun mener bestemt at hun har krav på to." },
-    { at: 45, emo: "🪞", nm: "speil",         tittel: "Speil på veggen!",
-      msg: "Mathilde har stått foran det i tjue minutter og er fortsatt imponert." },
-    { at: 50, emo: "🌾", nm: "halmballe",     tittel: "Halmballe levert!",
-      msg: "En hel ball å rote i. Ingenting i verden er bedre enn å rote." },
     { at: 55, emo: "☂️", nm: "parasoll",      tittel: "Skygge på varme dager!",
       msg: "Petra la beslag på den umiddelbart. Harald later som han ikke bryr seg." },
     { at: 60, emo: "🌳", nm: "skyggetre",     tittel: "Et helt tre!",
@@ -918,7 +928,7 @@
     var lockTxt = renderLock(n);
 
     var pace = paceText(n);
-    renderTv(n, pct, days, pace, have.concat(gaver), lockTxt);
+    renderTv(n, pct, days, pace, lockTxt);
   }
 
   /* --------- Gårdsplassen --------- */
@@ -927,10 +937,10 @@
                '<span class="cloud b"></span><span class="cloud c"></span>';
 
   function tegnGaard(have, gaver) {
-    var yard = $("yard");
+    var html;
 
     if (!have.length) {
-      yard.innerHTML = HIMMEL +
+      html = HIMMEL +
         '<span class="empty">Gårdsplassen er tom. Første kylling klekkes på oppgave 5. 🥚</span>';
     } else {
       // Kyllinger og godbiter blandes, så tingene står midt blant flokken
@@ -942,24 +952,32 @@
         if (gaver[k]) deler.push('<span class="toy" style="animation-delay:' + (k * .31).toFixed(2) +
           's" title="' + gaver[k].nm + '">' + gaver[k].emo + '</span>');
       }
-      yard.innerHTML = HIMMEL + deler.join("");
+      html = HIMMEL + deler.join("");
     }
 
-    // Linja under gårdsplassen
-    var info = $("yardInfo");
-    if (!REVIEW_N) { info.textContent = ""; return; }
+    $("yard").innerHTML = html;
+    $("tvYard").innerHTML = html;
 
-    var rn = reviewDone();
-    var neste = null;
-    for (var j = 0; j < GODBITER.length; j++) if (GODBITER[j].at > rn) { neste = GODBITER[j]; break; }
+    // Linja om godbitene – står både under gårdsplassen og på skjermvisningen
+    var tekst = "";
+    if (REVIEW_N) {
+      var rn = reviewDone();
+      var neste = null;
+      for (var j = 0; j < GODBITER.length; j++) if (GODBITER[j].at > rn) { neste = GODBITER[j]; break; }
 
-    if (!neste) {
-      info.innerHTML = "Flokken har fått <b>alle " + GODBITER.length + " godbitene</b>. Gården er komplett. 🌳";
-    } else {
-      info.innerHTML = "Flokken har fått <b>" + gaver.length + " av " + GODBITER.length + " godbiter</b>. " +
-        "Neste (" + neste.nm + " " + neste.emo + ") kommer etter <b>" + (neste.at - rn) +
-        (neste.at - rn === 1 ? " oppgave" : " oppgaver") + "</b> til i gjennomgangen.";
+      if (doneCount() < UNLOCK_AT && !gaver.length) {
+        tekst = "Når hønsehuset åpnes, gir hver 5. ferdige gjennomgangsoppgave flokken en ny godbit. " +
+          "Det er <b>" + GODBITER.length + "</b> av dem å hente.";
+      } else if (!neste) {
+        tekst = "Flokken har fått <b>alle " + GODBITER.length + " godbitene</b>. Gården er komplett. 🌳";
+      } else {
+        tekst = "Flokken har fått <b>" + gaver.length + " av " + GODBITER.length + " godbiter</b>. " +
+          "Neste (" + neste.nm + " " + neste.emo + ") kommer etter <b>" + (neste.at - rn) +
+          (neste.at - rn === 1 ? " oppgave" : " oppgaver") + "</b> til i gjennomgangen.";
+      }
     }
+    $("yardInfo").innerHTML = tekst;
+    $("tvGodbit").innerHTML = tekst;
   }
 
   function checkGodbit(before, after) {
@@ -1020,7 +1038,7 @@
     return tv;
   }
 
-  function renderTv(n, pct, days, pace, have, lockTxt) {
+  function renderTv(n, pct, days, pace, lockTxt) {
     $("tvLock").textContent = lockTxt || "";
     $("tvDone").textContent = n;
     $("tvBar").style.width = pct + "%";
@@ -1029,7 +1047,6 @@
     $("tvDays").textContent = days === null ? "–" : (days > 0 ? days : 0);
     $("tvPct").textContent = pct + " %";
     $("tvPace").textContent = pace;
-    $("tvYard").textContent = have.length ? have.map(function (a) { return a.emo; }).join(" ") : "🥚";
   }
 
   /* =========================== Feiring =================================== */
