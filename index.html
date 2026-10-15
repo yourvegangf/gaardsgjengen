@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="nb">
 <head>
 <meta charset="utf-8">
@@ -389,7 +389,7 @@
     </svg>
     <div class="head-text">
       <h1>Gårdsgjengen</h1>
-      <p class="tagline">60 oppgaver og 60 gjennomganger, 300 timer — og en ny kylling i flokken for hver femte.</p>
+      <p class="tagline">59 oppgaver og 60 gjennomganger, 297 timer — og en ny kylling i flokken for hver femte.</p>
     </div>
     <div class="head-btns">
       <button class="btn" id="tvBtn" type="button">Skjermvisning</button>
@@ -417,10 +417,10 @@
         </div>
       </div>
       <div class="stats">
-        <div class="stat"><b id="sDone">0 / 60</b><span id="sDoneLbl">hovedoppgaver gjort</span></div>
+        <div class="stat"><b id="sDone">0 / 59</b><span id="sDoneLbl">hovedoppgaver gjort</span></div>
         <div class="stat" id="sReviewStat"><b id="sReview">–</b><span id="sReviewLbl">gjennomganger ferdig</span></div>
-        <div class="stat"><b id="sHours">0 t</b><span id="sHoursLbl">av 300 timer</span></div>
-        <div class="stat"><b id="sLeft">120</b><span id="sLeftLbl">oppgaver igjen</span></div>
+        <div class="stat"><b id="sHours">0 t</b><span id="sHoursLbl">av 297 timer</span></div>
+        <div class="stat"><b id="sLeft">119</b><span id="sLeftLbl">oppgaver igjen</span></div>
         <div class="stat"><b id="sDays">–</b><span id="sDaysLbl">dager til frist</span></div>
       </div>
     </div>
@@ -514,11 +514,11 @@
 <div class="tv" id="tv">
   <button class="btn exit" id="tvExit" type="button">Lukk</button>
   <h2 class="tvTitle">Gårdsgjengen</h2>
-  <div class="tvBig"><span id="tvDone">0</span><small> / 60</small></div>
+  <div class="tvBig"><span id="tvDone">0</span><small> / <span id="tvTotal">59</span></small></div>
   <div class="tvBar"><i id="tvBar"></i></div>
   <div class="tvRow">
-    <div><b id="tvHours">0 t</b><span id="tvHoursLbl">av 300 timer</span></div>
-    <div><b id="tvLeft">120</b>oppgaver igjen</div>
+    <div><b id="tvHours">0 t</b><span id="tvHoursLbl">av 297 timer</span></div>
+    <div><b id="tvLeft">119</b>oppgaver igjen</div>
     <div><b id="tvDays">–</b>dager til frist</div>
     <div><b id="tvPct">0 %</b>ferdig totalt</div>
   </div>
@@ -540,7 +540,7 @@
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxydHF1ZWRxamRnYnhnemRybndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNzE5MjEsImV4cCI6MjEwNTY0NzkyMX0.RsFGvDYvS7HMM2-eV6Tyak_8It5QmRDLkr3Hbf5qBYo',
 
     START_DATO:   '2026-09-22',   // dagen dere begynte (brukes til «i rute / bak skjema»)
-    FRIST_DATO:   '2026-10-15',   // fristen – gjelder BÅDE hovedlista og gjennomgangen
+    FRIST_DATO:   '2026-10-25',   // fristen – gjelder BÅDE hovedlista og gjennomgangen
     TIMER_PER_OPPGAVE: 3,
     // Gjennomgangsoppgavene: 1 time per avkryssing, altså 2 timer per oppgave
     TIMER_PER_GJENNOMGANG_AVKRYSSING: 1,
@@ -560,7 +560,12 @@
   };
   /* ========================================================================= */
 
-  var TOTAL = 60;
+  // TOTAL = hvor mange hovedoppgaver som vises og telles.
+  // HOVED_MAX = hvor langt hovedoppgavene går i databasen (id 1–60, deretter gjennomgang).
+  // De to er med vilje ulike: da kan antallet endres uten å røre en eneste rad i databasen.
+  // Rad 60 ligger urørt i basen, men vises ikke så lenge TOTAL er 59.
+  var TOTAL = 59;
+  var HOVED_MAX = 60;
   var HPT = CONFIG.TIMER_PER_OPPGAVE;
   var HPG = CONFIG.TIMER_PER_GJENNOMGANG_AVKRYSSING;   // timer per avkryssing i gjennomgangen
   var LOCAL_KEY = "gaardsgjengen.demo.v2";
@@ -577,7 +582,8 @@
     { at: 45, emo: "🐔", nm: "Gullrun", msg: "Gullrun brer ut vingene. Bare femten igjen nå." },
     { at: 50, emo: "🐔", nm: "Petra",   msg: "Petra kom akkurat i tide til innspurten. Ti igjen!" },
     { at: 55, emo: "🐓", nm: "Harald",  msg: "Hanen Harald galer over de siste fem oppgavene." },
-    { at: 60, emo: "🏡", nm: "Full gård", msg: "Alle 60 er gjort. 180 timer, tolv høns og en full hønsegård — gratulerer!" }
+    { at: 59, emo: "🏡", nm: "Full gård", siste: true,
+      msg: "Alle 59 er gjort. 177 timer, tolv høns og en full hønsegård — gratulerer!" }
   ];
 
   // Belønning til flokken for hver 5. ferdige gjennomgangsoppgave
@@ -604,7 +610,7 @@
       msg: "Det ble ett hver. Gullrun mener bestemt at hun har krav på to." },
     { at: 55, emo: "☂️", nm: "parasoll",      tittel: "Skygge på varme dager!",
       msg: "Petra la beslag på den umiddelbart. Harald later som han ikke bryr seg." },
-    { at: 60, emo: "🌳", nm: "skyggetre",     tittel: "Et helt tre!",
+    { at: 60, emo: "🌳", nm: "skyggetre",     tittel: "Et helt tre!", siste: true,
       msg: "Gjennomgangen er ferdig, og flokken har alt de kan ønske seg. Godt jobbet." }
   ];
 
@@ -640,7 +646,7 @@
 
   function blankTasks() {
     var t = {};
-    for (var i = 1; i <= TOTAL; i++) {
+    for (var i = 1; i <= HOVED_MAX; i++) {
       t[i] = { id: i, phase: "hoved", label: "Nummer " + i, done: false, done2: false };
     }
     for (var j = 61; j <= LAST_ID; j++) {
@@ -731,7 +737,7 @@
 
   function buildCard(id, target) {
     var el = document.createElement("div");
-    var isReview = id > 60;
+    var isReview = id > HOVED_MAX;
     el.className = isReview ? "task two" : "task";
 
     if (isReview) {
@@ -791,7 +797,7 @@
 
     if (REVIEW_N > 0) {
       var rg = $("reviewGrid"); rg.innerHTML = "";
-      for (var j = 61; j <= 60 + REVIEW_N; j++) buildCard(j, rg);
+      for (var j = 61; j <= HOVED_MAX + REVIEW_N; j++) buildCard(j, rg);
     }
   }
 
@@ -836,7 +842,7 @@
 
     if (next) {
       burst(el);
-      if (id <= TOTAL) checkMilestone(before, doneCount());
+      if (id <= HOVED_MAX) checkMilestone(before, doneCount());
       else checkGodbit(beforeR, reviewDone());
     }
 
@@ -903,14 +909,14 @@
   // Antall gjennomgangsoppgaver der BEGGE avkryssingene er satt
   function reviewDone() {
     var n = 0;
-    for (var j = 61; j <= 60 + REVIEW_N; j++) if (tasks[j] && tasks[j].done && tasks[j].done2) n++;
+    for (var j = 61; j <= HOVED_MAX + REVIEW_N; j++) if (tasks[j] && tasks[j].done && tasks[j].done2) n++;
     return n;
   }
 
   // Antall enkeltavkryssinger, av REVIEW_N * 2
   function reviewSteps() {
     var n = 0;
-    for (var j = 61; j <= 60 + REVIEW_N; j++) {
+    for (var j = 61; j <= HOVED_MAX + REVIEW_N; j++) {
       if (!tasks[j]) continue;
       if (tasks[j].done) n++;
       if (tasks[j].done2) n++;
@@ -994,7 +1000,7 @@
 
     for (var i = 1; i <= LAST_ID; i++) {
       if (!nodes[i] || !tasks[i]) continue;
-      if (i > 60) {
+      if (i > HOVED_MAX) {
         nodes[i].classList.toggle("done", tasks[i].done && tasks[i].done2);
         Array.prototype.forEach.call(nodes[i].querySelectorAll(".step"), function (btn) {
           btn.classList.toggle("on", !!tasks[i][btn.getAttribute("data-felt")]);
@@ -1172,6 +1178,7 @@
   function renderTv(n, T, days, pace, lockTxt) {
     $("tvLock").textContent = lockTxt || "";
     $("tvDone").textContent = n;
+    $("tvTotal").textContent = TOTAL;
     $("tvBar").style.width = T.pct + "%";
     $("tvHours").textContent = T.gjort + " t";
     $("tvHoursLbl").textContent = "av " + T.totalt + " timer";
@@ -1194,10 +1201,10 @@
 
   function celebrate(a) {
     $("mEmo").textContent = a.emo;
-    $("mTitle").textContent = a.tittel || (a.at === TOTAL ? "Hele lista er gjort!" : a.nm + " er klekket!");
+    $("mTitle").textContent = a.tittel || (a.siste ? "Hele lista er gjort!" : a.nm + " er klekket!");
     $("mText").textContent = a.msg;
     veil.classList.add("show");
-    rain(a.at === TOTAL ? 70 : 28);
+    rain(a.siste ? 70 : 28);
   }
 
   function burst(el) {
@@ -1239,7 +1246,7 @@
   function applyFilter() {
     Object.keys(nodes).forEach(function (id) {
       var t = tasks[id];
-      var ferdig = t && (id > 60 ? (t.done && t.done2) : t.done);
+      var ferdig = t && (id > HOVED_MAX ? (t.done && t.done2) : t.done);
       nodes[id].style.display = (filterOpen && ferdig) ? "none" : "";
     });
   }
@@ -1399,7 +1406,7 @@
           tasks[r.id].done2 = !!r.done2;
           if (typeof r.label === "string" && r.label) tasks[r.id].label = r.label;
           render();
-          if (r.id <= TOTAL) checkMilestone(before, doneCount());
+          if (r.id <= HOVED_MAX) checkMilestone(before, doneCount());
           else checkGodbit(beforeR, reviewDone());
         })
         .subscribe();
